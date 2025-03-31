@@ -31,6 +31,7 @@ public class Server {
             ChannelFuture future = bootstrap.bind(port).sync();
             future.channel().closeFuture().sync();
         } catch (Exception e) {
+            e.printStackTrace();
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }

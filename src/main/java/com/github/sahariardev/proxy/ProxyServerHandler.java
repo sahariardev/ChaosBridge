@@ -1,11 +1,13 @@
 package com.github.sahariardev.proxy;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -13,7 +15,11 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     private final int port;
 
-    private Channel channel;
+    private Channel serverChannel;
+
+    private Channel clientChannel;
+
+    private final Queue<Object> messageQueue = new ConcurrentLinkedQueue<>();
 
     public ProxyServerHandler(String host, int port) {
         this.host = host;
@@ -22,6 +28,7 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        clientChannel = ctx.channel();
         connectToServer();
     }
 
@@ -31,13 +38,17 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                 .channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) throws Exception {
-                        channel.pipeline().addLast(new ProxyClientHandler());
+                        channel.pipeline().addLast(new ProxyClientHandler(clientChannel));
                     }
                 });
 
         bootstrap.connect(host, port).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                channel = future.channel();
+                serverChannel = future.channel();
+
+                while (!messageQueue.isEmpty()) {
+                    serverChannel.writeAndFlush(messageQueue.poll());
+                }
             } else {
                 //todo:: replace with log
                 future.cause().printStackTrace();
@@ -47,15 +58,20 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (channel != null && channel.isActive()) {
-            channel.writeAndFlush(msg);
+        System.out.println("here" + (serverChannel != null && serverChannel.isActive()));
+        if (serverChannel != null && serverChannel.isActive()) {
+            System.out.println("Got Request from application and sendit it to server");
+            System.out.println(msg);
+            serverChannel.writeAndFlush(msg);
+        } else {
+            messageQueue.add(msg);
         }
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        if (channel != null && channel.isActive()) {
-            channel.read();
+        if (serverChannel != null && serverChannel.isActive()) {
+            serverChannel.read();
         }
     }
 

@@ -1,29 +1,25 @@
 package com.github.sahariardev.proxy;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+@ChannelHandler.Sharable
 public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
 
-    private final Channel clientChannel;
+    private final Consumer<Object> consumer;
 
-    public ProxyClientHandler(Channel clientChannel) {
-        this.clientChannel = clientChannel;
+    public ProxyClientHandler(Consumer<Object> consumer) {
+        this.consumer = consumer;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (clientChannel != null && clientChannel.isActive()) {
-            clientChannel.writeAndFlush(msg);
-        }
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        if (clientChannel != null && clientChannel.isActive()) {
-            clientChannel.flush();
-        }
+       consumer.accept(msg);
     }
 
     @Override

@@ -23,7 +23,7 @@ public class Server {
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel channel) throws Exception {
+                        protected void initChannel(SocketChannel channel) {
                             channel.pipeline().addLast(new ProxyServerHandler(serverHost, serverPort));
                         }
                     });

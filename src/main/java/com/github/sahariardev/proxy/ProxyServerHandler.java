@@ -34,6 +34,7 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("Got message");
         createClientChannel(ctx);
         if (channel != null && channel.isActive()) {
             channel.writeAndFlush(msg);

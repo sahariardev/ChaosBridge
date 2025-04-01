@@ -1,5 +1,6 @@
 package com.github.sahariardev.proxy;
 
+import com.github.sahariardev.proxy.chaos.BandwidthLimitHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -23,10 +24,12 @@ public class Server {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInitializer<SocketChannel>() {
+                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel channel) {
-                            channel.pipeline().addLast(new ProxyServerHandler(serverHost, serverPort));
+                            channel.pipeline().addLast(new ProxyServerHandler(serverHost, serverPort))
+                                    .addLast(new BandwidthLimitHandler());
                         }
                     });
 

@@ -10,6 +10,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
+import static com.github.sahariardev.proxy.ProxyServerHandler.eventLoopGroup;
+
 public class Server {
 
     public void start(int port, String serverHost, int serverPort) {
@@ -34,6 +36,7 @@ public class Server {
             e.printStackTrace();
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            eventLoopGroup.shutdownGracefully();
         }
 
     }

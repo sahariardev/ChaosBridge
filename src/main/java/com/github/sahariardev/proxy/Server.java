@@ -1,6 +1,6 @@
 package com.github.sahariardev.proxy;
 
-import com.github.sahariardev.proxy.chaos.BandwidthLimitHandler;
+import com.github.sahariardev.proxy.ReactorNettyChunkedTcpProxy.BandwidthLimitHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;

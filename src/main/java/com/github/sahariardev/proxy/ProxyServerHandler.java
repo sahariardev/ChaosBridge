@@ -59,7 +59,7 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                 .channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) {
-                        channel.pipeline().addLast(new ProxyClientHandler(ctx::writeAndFlush));
+                        channel.pipeline().addLast(new ProxyClientHandler(ctx::fireChannelRead));
                     }
                 });
         bootstrap.connect(host, port).addListener((ChannelFutureListener) future -> {

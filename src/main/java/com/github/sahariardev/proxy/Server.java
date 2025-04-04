@@ -1,6 +1,6 @@
 package com.github.sahariardev.proxy;
 
-import com.github.sahariardev.chaos.NoChaos;
+import com.github.sahariardev.chaos.EmptyChaos;
 import com.github.sahariardev.pipeline.Pipeline;
 
 import java.io.IOException;
@@ -40,14 +40,14 @@ public class Server {
         ) {
             Pipeline upStreamPipeLine = new Pipeline.Builder()
                     .name("upstream")
-                    .addLast(new NoChaos())
-                    .addLast(new NoChaos())
-                    .addLast(new NoChaos())
+                    .addLast(new EmptyChaos())
+                    .addLast(new EmptyChaos())
+                    .addLast(new EmptyChaos())
                     .build();
 
             Pipeline downStreamPipeLine = new Pipeline.Builder()
                     .name("downstream")
-                    .addLast(new NoChaos())
+                    .addLast(new EmptyChaos())
                     .build();
 
             Future<?> upStreamFuture = executorService.submit(() -> {

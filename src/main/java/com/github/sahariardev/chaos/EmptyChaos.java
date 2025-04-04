@@ -2,12 +2,12 @@ package com.github.sahariardev.chaos;
 
 import java.io.*;
 
-public class NoChaos implements Chaos {
+public class EmptyChaos implements Chaos {
     private final PipedInputStream inputStream;
 
     private final PipedOutputStream outputStream;
 
-    public NoChaos() throws IOException {
+    public EmptyChaos() throws IOException {
         this.outputStream = new PipedOutputStream();
         this.inputStream = new PipedInputStream(outputStream);
     }

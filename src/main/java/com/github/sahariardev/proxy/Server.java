@@ -1,5 +1,8 @@
 package com.github.sahariardev.proxy;
 
+import com.github.sahariardev.chaos.NoChaos;
+import com.github.sahariardev.pipeline.Pipeline;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,11 +20,15 @@ public class Server {
                 ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
                 ServerSocket serverSocket = new ServerSocket(port)) {
 
+            //serverSocket.setSoTimeout(5000);
+
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 executorService.execute(() -> {
-                    handleClient(clientSocket, serverHost, serverPort);
+
                 });
+
+                handleClient(clientSocket, serverHost, serverPort);
             }
         }
     }
@@ -35,11 +42,14 @@ public class Server {
                 OutputStream targetOutputStream = targetSocket.getOutputStream();
                 ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()
         ) {
+            Pipeline upStreamPipeLine = new Pipeline.Builder().name("upstream").addChaosLast(new NoChaos()).build();
+            Pipeline downStreamPipeLine = new Pipeline.Builder().name("downstream").addChaosLast(new NoChaos()).build();
+
             Future<?> upStreamFuture = executorService.submit(() -> {
-                copyStream(clientInputStream, targetOutputStream);
+                copyStream(clientInputStream, targetOutputStream, upStreamPipeLine);
             });
             Future<?> downStreamFuture = executorService.submit(() -> {
-                copyStream(targetInputStream, clientOutputStream);
+                copyStream(targetInputStream, clientOutputStream, downStreamPipeLine);
             });
 
             upStreamFuture.get();
@@ -49,15 +59,9 @@ public class Server {
         }
     }
 
-    public void copyStream(InputStream inputStream, OutputStream outputStream) {
-        byte[] buffer = new byte[1024];
-        int read;
-
+    public void copyStream(InputStream inputStream, OutputStream outputStream, Pipeline pipeline) {
         try {
-            while ((read = inputStream.read(buffer)) != 0) {
-                outputStream.write(buffer, 0, read);
-                outputStream.flush();
-            }
+            pipeline.copy(inputStream, outputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

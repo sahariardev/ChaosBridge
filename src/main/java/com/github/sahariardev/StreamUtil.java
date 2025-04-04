@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 
 public class StreamUtil {
 
@@ -20,6 +21,12 @@ public class StreamUtil {
             while ((read = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, read);
                 outputStream.flush();
+            }
+        } catch (SocketException e) {
+            if ("Socket closed".equals(e.getMessage())) {
+                log.error("Socket closed", e);
+            } else {
+                throw e;
             }
         }
     }

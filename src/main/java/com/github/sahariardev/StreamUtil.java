@@ -10,9 +10,11 @@ public class StreamUtil {
         byte[] buffer = new byte[bufferSize];
         int read;
 
-        while ((read = inputStream.read(buffer)) != 0) {
-            outputStream.write(buffer, 0, read);
-            outputStream.flush();
+        try (inputStream; outputStream) {
+            while ((read = inputStream.read(buffer)) != 0) {
+                outputStream.write(buffer, 0, read);
+                outputStream.flush();
+            }
         }
     }
 }

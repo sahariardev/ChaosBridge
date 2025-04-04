@@ -20,15 +20,11 @@ public class Server {
                 ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
                 ServerSocket serverSocket = new ServerSocket(port)) {
 
-            //serverSocket.setSoTimeout(5000);
-
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 executorService.execute(() -> {
-
+                    handleClient(clientSocket, serverHost, serverPort);
                 });
-
-                handleClient(clientSocket, serverHost, serverPort);
             }
         }
     }
@@ -42,8 +38,17 @@ public class Server {
                 OutputStream targetOutputStream = targetSocket.getOutputStream();
                 ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()
         ) {
-            Pipeline upStreamPipeLine = new Pipeline.Builder().name("upstream").addChaosLast(new NoChaos()).build();
-            Pipeline downStreamPipeLine = new Pipeline.Builder().name("downstream").addChaosLast(new NoChaos()).build();
+            Pipeline upStreamPipeLine = new Pipeline.Builder()
+                    .name("upstream")
+                    .addLast(new NoChaos())
+                    .addLast(new NoChaos())
+                    .addLast(new NoChaos())
+                    .build();
+
+            Pipeline downStreamPipeLine = new Pipeline.Builder()
+                    .name("downstream")
+                    .addLast(new NoChaos())
+                    .build();
 
             Future<?> upStreamFuture = executorService.submit(() -> {
                 copyStream(clientInputStream, targetOutputStream, upStreamPipeLine);

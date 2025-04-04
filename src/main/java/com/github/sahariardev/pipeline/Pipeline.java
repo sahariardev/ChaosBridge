@@ -59,7 +59,7 @@ public class Pipeline {
             return this;
         }
 
-        public Builder addChaosLast(Chaos chaos) {
+        public Builder addLast(Chaos chaos) {
             chaosList.add(chaos);
             return this;
         }

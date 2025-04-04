@@ -18,18 +18,8 @@ public class NoChaos implements Chaos {
     }
 
     @Override
-    public void read(OutputStream outputStream) throws IOException {
-        copyStream(inputStream, outputStream);
-    }
-
-    @Override
     public InputStream getInputStream() {
         return inputStream;
-    }
-
-    @Override
-    public OutputStream getOutputStream() {
-        return outputStream;
     }
 
 }

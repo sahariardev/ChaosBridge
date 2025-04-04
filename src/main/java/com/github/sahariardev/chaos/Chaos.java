@@ -10,11 +10,7 @@ public interface Chaos {
 
     void write(InputStream inputStream) throws IOException;
 
-    void read(OutputStream outputStream) throws IOException;
-
     InputStream getInputStream();
-
-    OutputStream getOutputStream();
 
     default void copyStream(InputStream inputStream, OutputStream outputStream) throws IOException {
         StreamUtil.copyStream(inputStream, outputStream, 8 * 1024);

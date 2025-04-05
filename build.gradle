@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id("io.micronaut.application") version "4.2.1"
 }
 
 group = 'com.github.sahariardev'
@@ -9,11 +10,29 @@ repositories {
     mavenCentral()
 }
 
+micronaut {
+    version("4.2.1")
+    runtime("netty")
+    processing {
+        incremental(true)
+        annotations("com.github.sahariardev.web.*")
+    }
+}
+
+application {
+    mainClass.set("com.github.sahariardev.Application")
+}
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation 'org.slf4j:slf4j-api:2.0.7'
     implementation 'ch.qos.logback:logback-classic:1.4.7'
+    implementation("io.micronaut:micronaut-http-server-netty")
+    implementation("io.micronaut:micronaut-runtime")
+    implementation("jakarta.annotation:jakarta.annotation-api")
+    implementation("io.micronaut.views:micronaut-views-velocity")
+    implementation("io.micronaut:micronaut-jackson-databind")
 }
 
 test {

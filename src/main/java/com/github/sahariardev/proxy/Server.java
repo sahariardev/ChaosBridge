@@ -1,6 +1,8 @@
 package com.github.sahariardev.proxy;
 
+import com.github.sahariardev.chaos.BandwidthChaos;
 import com.github.sahariardev.chaos.EmptyChaos;
+import com.github.sahariardev.chaos.LatencyChaos;
 import com.github.sahariardev.pipeline.Pipeline;
 
 import java.io.IOException;
@@ -48,6 +50,7 @@ public class Server {
             Pipeline downStreamPipeLine = new Pipeline.Builder()
                     .name("downstream")
                     .addLast(new EmptyChaos())
+                    .addLast(new BandwidthChaos(64))
                     .build();
 
             Future<?> upStreamFuture = executorService.submit(() -> {

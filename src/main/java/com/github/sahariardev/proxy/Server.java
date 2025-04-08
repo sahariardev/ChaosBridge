@@ -42,15 +42,10 @@ public class Server {
         ) {
             Pipeline upStreamPipeLine = new Pipeline.Builder()
                     .name("upstream")
-                    .addLast(new EmptyChaos())
-                    .addLast(new EmptyChaos())
-                    .addLast(new EmptyChaos())
                     .build();
 
             Pipeline downStreamPipeLine = new Pipeline.Builder()
                     .name("downstream")
-                    .addLast(new EmptyChaos())
-                    .addLast(new BandwidthChaos(64))
                     .build();
 
             Future<?> upStreamFuture = executorService.submit(() -> {

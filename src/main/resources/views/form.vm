@@ -1,15 +1,15 @@
 <html>
 <body>
 <h2>Chaos Proxy UI</h2>
-<form method="POST" action="/submit">
-    <label>Target Host:</label><br>
-    <input type="text" name="host"/><br><br>
+<form method="POST" action="/createNewProxy">
+    <label>Port:</label><br>
+    <input type="number" name="port"/><br><br>
 
-    <label>Latency (ms):</label><br>
-    <input type="number" name="latency"/><br><br>
+    <label>Server Host:</label><br>
+    <input type="text" name="serverHost"/><br><br>
 
-    <label>Bandwidth (bytes/sec):</label><br>
-    <input type="number" name="bandwidth"/><br><br>
+    <label>Port:</label><br>
+    <input type="number" name="serverPort"/><br><br>
 
     <button type="submit">Apply</button>
 </form>

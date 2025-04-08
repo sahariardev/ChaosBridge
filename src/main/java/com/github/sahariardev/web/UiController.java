@@ -1,31 +1,82 @@
 package com.github.sahariardev.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.github.sahariardev.common.Store;
+import com.github.sahariardev.proxy.Server;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.annotation.*;
 import io.micronaut.views.View;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Controller("/")
 public class UiController {
-    @View("form") // uses views/form.vm
-    @Get("/")
+
+    private static final Logger logger = LoggerFactory.getLogger(UiController.class);
+
+    @View("form")
+    @Get("/createNewProxy")
     public HttpResponse<?> index() {
+        logger.info("[Get] Creating new proxy");
         return HttpResponse.ok();
     }
 
-    @Post("/submit")
-    public HttpResponse<String> applyChaos(@Body Map<String, String> formData) {
-        String host = formData.get("host");
-        int latency = Integer.parseInt(formData.get("latency"));
-        int bandwidth = Integer.parseInt(formData.get("bandwidth"));
+    @Post("/createNewProxy")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public HttpResponse<?> render(@Body Map<String, String> formData) throws IOException {
+        logger.info("[POST] Creating new proxy with data {}", formData);
 
-        // You can wire this to your chaos proxy logic
-        System.out.printf("Applying chaos to host %s with latency=%dms, bandwidth=%dB/s%n", host, latency, bandwidth);
+        Server server = new Server();
 
-        return HttpResponse.ok("Chaos applied successfully!");
+        ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+        executorService.execute(() -> {
+            try {
+                logger.info("starting new proxy with data {}", formData);
+                server.start(Integer.parseInt(formData.get("port")),
+                        formData.get("serverHost"),
+                        Integer.parseInt(formData.get("serverPort")));
+            } catch (IOException e) {
+                logger.error("Error starting new proxy", e);
+                throw new RuntimeException(e);
+            }
+        });
+
+        String key = String.format("%s-%s-%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("key", key);
+        response.put("message", "Proxy started successfully " + formData);
+
+        return HttpResponse.ok(response);
+    }
+
+
+    @Post("/addChaos/{key}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public HttpResponse<Map<String, String>> applyChaos(@PathVariable String key, @Body Map<String, String> formData) {
+        int bytePerSecond = Integer.parseInt(formData.get("bytePerSecond"));
+
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode json = mapper.createObjectNode();
+        json.put("type", "bandwidthChaos");
+        json.put("bytePerSecond", bytePerSecond);
+
+        Store.INSTANCE.put(key, json);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Chaos Added for " + key + " data " + formData);
+
+        return HttpResponse.ok(response);
     }
 }

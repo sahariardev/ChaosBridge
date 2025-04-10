@@ -31,8 +31,12 @@ dependencies {
     implementation("io.micronaut:micronaut-http-server-netty")
     implementation("io.micronaut:micronaut-runtime")
     implementation("jakarta.annotation:jakarta.annotation-api")
+    annotationProcessor("io.micronaut:micronaut-inject-java")
     implementation("io.micronaut.views:micronaut-views-velocity")
     implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut:micronaut-inject")
+    implementation("io.micronaut:micronaut-core")
+    implementation("org.yaml:snakeyaml:2.4")
 }
 
 test {

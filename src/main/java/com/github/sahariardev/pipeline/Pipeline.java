@@ -46,6 +46,10 @@ public class Pipeline {
         }
     }
 
+    public void addChaos(Chaos chaos) {
+        chaosList.add(chaos);
+    }
+
     public String getName() {
         return name;
     }

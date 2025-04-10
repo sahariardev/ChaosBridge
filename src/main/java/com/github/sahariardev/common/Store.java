@@ -12,14 +12,18 @@ public class Store {
 
     public static final Store INSTANCE = new Store();
 
-    private Store() {}
+    private Store() {
+    }
 
     public List<ObjectNode> get(String key) {
+        if (!map.containsKey(key)) {
+            return Collections.emptyList();
+        }
         return Collections.unmodifiableList(map.get(key));
     }
 
     public void put(String key, ObjectNode value) {
-        List<ObjectNode> list = map.computeIfAbsent(key, k->Collections.synchronizedList(new ArrayList<>()));
+        List<ObjectNode> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
         list.add(value);
     }
 }

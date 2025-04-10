@@ -11,6 +11,11 @@ public class Application {
 
     public static void main(String[] args) throws IOException {
         logger.info("Application started");
-        Micronaut.run(Application.class, args);
+        var context  = Micronaut.run(Application.class, args);
+
+        var env = context.getEnvironment();
+
+        System.out.println("📄 Property Sources: " + env.getPropertySources());
+        System.out.println("🌐 Server port: " + env.getProperty("micronaut.server.port", Integer.class).orElse(-1));
     }
 }

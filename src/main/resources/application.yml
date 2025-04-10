@@ -1,3 +1,5 @@
 micronaut:
   server:
     port: 9090
+  application:
+    package: com.github.sahariardev.web

@@ -1,0 +1,11 @@
+<html>
+<body>
+<h2>Add chaos </h2>
+<form method="POST" action="/">
+    <label>Byte Per Second:</label><br>
+    <input type="number" name="bytePerSecond"/><br><br>
+
+    <button type="submit">Apply</button>
+</form>
+</body>
+</html>

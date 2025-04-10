@@ -1,8 +1,10 @@
 package com.github.sahariardev.proxy;
 
-import com.github.sahariardev.chaos.BandwidthChaos;
-import com.github.sahariardev.chaos.EmptyChaos;
-import com.github.sahariardev.chaos.LatencyChaos;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.sahariardev.chaos.Chaos;
+import com.github.sahariardev.chaos.ChaosFactory;
+import com.github.sahariardev.common.Constant;
+import com.github.sahariardev.common.Store;
 import com.github.sahariardev.pipeline.Pipeline;
 
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,7 +20,22 @@ import java.util.concurrent.Future;
 
 public class Server {
 
-    public void start(int port, String serverHost, int serverPort) throws IOException {
+    private final int port;
+
+    private final String serverHost;
+
+    private final int serverPort;
+
+    private final String key;
+
+    public Server(int port, String serverHost, int serverPort, String key) {
+        this.port = port;
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+        this.key = key;
+    }
+
+    public void start() throws IOException {
         try (
                 ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
                 ServerSocket serverSocket = new ServerSocket(port)) {
@@ -47,6 +65,23 @@ public class Server {
             Pipeline downStreamPipeLine = new Pipeline.Builder()
                     .name("downstream")
                     .build();
+
+            List<ObjectNode> chaosConfig = Store.INSTANCE.get(key);
+
+            for (ObjectNode chaosConfigNode : chaosConfig) {
+
+                Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode);
+
+                if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.DOWNSTREAM)) {
+                    upStreamPipeLine.addChaos(chaos);
+
+                } else if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.UPSTREAM)) {
+                    downStreamPipeLine.addChaos(chaos);
+
+                } else {
+                    throw new IllegalStateException("Unexpected value: " + chaosConfigNode.get(Constant.LINE));
+                }
+            }
 
             Future<?> upStreamFuture = executorService.submit(() -> {
                 copyStream(clientInputStream, targetOutputStream, upStreamPipeLine);

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chaos Bridge Proxy App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9fc;
+            font-family: 'Inter', sans-serif;
+        }
+        header {
+            background-color: #8dbd8d;
+            color: #333;
+        }
+        .table thead {
+            background-color: #e0ccff;
+            color: #333;
+        }
+        .modal-header {
+            background-color: #8dbd8d;
+            color: #333;
+        }
+        .btn-primary {
+            background-color: #b8e2d6;
+            border: none;
+            color: #333;
+        }
+        .font-bold {
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #a6d8c8;
+        }
+        .btn-warning {
+            background-color: #ffdab9;
+            border: none;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background-color: #fcd5b5;
+        }
+        .btn-danger {
+            background-color: #f4cccc;
+            border: none;
+            color: #333;
+        }
+        .btn-danger:hover {
+            background-color: #e6bcbc;
+        }
+        .badge.bg-success {
+            background-color: #b5e7a0 !important;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<header class="p-3 text-center">
+    <h1 class="font-bold">Chaos Bridge</h1>
+    <nav class="mt-2">
+        <a href="#" class="text-dark me-3" data-bs-toggle="modal" data-bs-target="#startProxyModal">Start Proxy</a>
+    </nav>
+</header>
+
+<div class="container mt-5" id="home">
+    <h2 class="text-secondary">Active Proxies</h2>
+    <table class="table table-bordered table-hover mt-3">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Port</th>
+            <th>Server Host</th>
+            <th>Server Port</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td>8080</td>
+            <td>localhost</td>
+            <td>3000</td>
+            <td><span class="badge bg-success">Running</span></td>
+            <td>
+                <button class="btn btn-sm btn-danger">Stop</button>
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addChaosModal">Add Chaos</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Start Proxy Modal -->
+<div class="modal fade" id="startProxyModal" tabindex="-1" aria-labelledby="startProxyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="startProxyModalLabel">Start a New Proxy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-control" placeholder="Enter port">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Server Host</label>
+                        <input type="text" class="form-control" placeholder="Enter server host">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Server Port</label>
+                        <input type="number" class="form-control" placeholder="Enter server port">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Start Proxy</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Chaos Modal -->
+<div class="modal fade" id="addChaosModal" tabindex="-1" aria-labelledby="addChaosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addChaosModalLabel">Add Chaos to Proxy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Select Proxy</label>
+                        <select class="form-select">
+                            <option selected>Proxy 1</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Latency (ms)</label>
+                        <input type="number" class="form-control" placeholder="e.g. 100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Packet Loss (%)</label>
+                        <input type="number" class="form-control" placeholder="e.g. 5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bandwidth Limit (kbps)</label>
+                        <input type="number" class="form-control" placeholder="e.g. 512">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Drop Requests (%)</label>
+                        <input type="number" class="form-control" placeholder="e.g. 10">
+                    </div>
+                    <button type="submit" class="btn btn-warning">Apply Chaos</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

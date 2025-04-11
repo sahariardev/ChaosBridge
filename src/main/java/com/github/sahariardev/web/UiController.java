@@ -29,6 +29,14 @@ public class UiController {
 
     private static final Logger logger = LoggerFactory.getLogger(UiController.class);
 
+
+    @View("home")
+    @Get("/")
+    public HttpResponse<?> home() {
+        logger.info("[Get] home");
+        return HttpResponse.ok();
+    }
+
     @View("form")
     @Get("/createNewProxy")
     public HttpResponse<?> index() {

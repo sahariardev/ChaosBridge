@@ -6,7 +6,6 @@ import com.github.sahariardev.chaos.ChaosFactory;
 import com.github.sahariardev.common.Constant;
 import com.github.sahariardev.common.Store;
 import com.github.sahariardev.pipeline.Pipeline;
-import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

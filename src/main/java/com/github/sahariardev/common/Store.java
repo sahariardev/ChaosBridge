@@ -26,6 +26,10 @@ public class Store {
         return map.keySet().stream().toList();
     }
 
+    public synchronized void addServer(String key) {
+        map.put(key, new ArrayList<>());
+    }
+
     public void put(String key, ObjectNode value) {
         List<ObjectNode> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
         list.add(value);

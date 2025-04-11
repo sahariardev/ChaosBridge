@@ -34,7 +34,11 @@ public class UiController {
     @Get("/")
     public HttpResponse<?> home() {
         logger.info("[Get] home");
+        return HttpResponse.ok();
+    }
 
+    @Get("/proxy")
+    public HttpResponse<?> getAllProxy() {
         List<String> keys = Store.INSTANCE.keys();
 
         List<Map<String, String>> data = new ArrayList<>();
@@ -51,22 +55,15 @@ public class UiController {
 
         Map<String, Object> model = new HashMap<>();
         model.put("data", data);
-
         return HttpResponse.ok(model);
     }
 
-    @View("form")
-    @Get("/startProxy")
-    public HttpResponse<?> index() {
-        logger.info("[Get] Creating new proxy");
-        return HttpResponse.ok();
-    }
-
-    @Post("/startProxy")
-    public HttpResponse<?> render(@Body Map<String, String> formData) throws IOException {
+    @Post("/proxy")
+    public HttpResponse<?> addProxy(@Body Map<String, String> formData) {
         logger.info("[POST] Creating new proxy with data {}", formData);
 
         String key = String.format("%s:%s:%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
+        Store.INSTANCE.addServer(key);
         Server server = new Server(Integer.parseInt(formData.get("port")),
                 formData.get("serverHost"),
                 Integer.parseInt(formData.get("serverPort")), key);
@@ -89,14 +86,6 @@ public class UiController {
         response.put("message", "Proxy started successfully " + formData);
 
         return HttpResponse.ok(response);
-    }
-
-
-    @View("addChaos")
-    @Get("/addChaos/{key}")
-    public HttpResponse<?> addChaos(@PathVariable String key) {
-        logger.info("[Get] Add Chaos {}", key);
-        return HttpResponse.ok();
     }
 
     @Post("/addChaos/{key}")

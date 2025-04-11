@@ -87,7 +87,7 @@
             <th>Actions</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="proxy-list-table">
             #foreach($d in $data)
             <tr>
                 <td>$d.port</td>
@@ -192,17 +192,51 @@
         }
 
         $.ajax({
-            url: "/startProxy",
+            url: "/proxy",
             type: "POST",
             contentType: "application/json",
             data: JSON.stringify(data),
-            success: function(response) {
+            success: function (response) {
                 console.log("Success:", response);
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error("Error:", xhr.responseText);
             }
         });
+    });
+
+    const loadProxies = () => {
+        $.ajax({
+            url: "/proxy",
+            type: "GET",
+            success: function (data) {
+                $('#proxy-list-table').html('');
+                for (var d of data.data) {
+                    const proxyDetailHtmlTemplate =
+                    `<tr>
+                            <td>${d.port}</td>
+                            <td>${d.serverHost}</td>
+                            <td>${d.serverPort}</td>
+                            <td><span class="badge bg-success">Running</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-danger">Stop</button>
+                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addChaosModal">Add
+                                    Chaos
+                                </button>
+                            </td>
+                        </tr>
+                   `;
+                   $('#proxy-list-table').append(proxyDetailHtmlTemplate);
+                }
+            },
+            error: function (xhr) {
+                console.error("Error:", xhr.responseText);
+            }
+        });
+    }
+
+    $(function () {
+        loadProxies();
     });
 </script>
 </body>

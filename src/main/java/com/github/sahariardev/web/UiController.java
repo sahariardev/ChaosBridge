@@ -15,10 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Controller("/")
 public class UiController {
@@ -29,27 +30,43 @@ public class UiController {
 
     private static final Logger logger = LoggerFactory.getLogger(UiController.class);
 
-
     @View("home")
     @Get("/")
     public HttpResponse<?> home() {
         logger.info("[Get] home");
-        return HttpResponse.ok();
+
+        List<String> keys = Store.INSTANCE.keys();
+
+        List<Map<String, String>> data = new ArrayList<>();
+
+        for (String key : keys) {
+            Map<String, String> map = new HashMap<>();
+            String[] split = key.split(":");
+            map.put("port", split[0]);
+            map.put("serverHost", split[1]);
+            map.put("serverPort", split[2]);
+
+            data.add(map);
+        }
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("data", data);
+
+        return HttpResponse.ok(model);
     }
 
     @View("form")
-    @Get("/createNewProxy")
+    @Get("/startProxy")
     public HttpResponse<?> index() {
         logger.info("[Get] Creating new proxy");
         return HttpResponse.ok();
     }
 
-    @Post("/createNewProxy")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Post("/startProxy")
     public HttpResponse<?> render(@Body Map<String, String> formData) throws IOException {
         logger.info("[POST] Creating new proxy with data {}", formData);
 
-        String key = String.format("%s-%s-%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
+        String key = String.format("%s:%s:%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
         Server server = new Server(Integer.parseInt(formData.get("port")),
                 formData.get("serverHost"),
                 Integer.parseInt(formData.get("serverPort")), key);

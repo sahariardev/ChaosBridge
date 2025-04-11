@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chaos Bridge Proxy App</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Chaos Bridge</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -11,45 +11,56 @@
             background-color: #f9f9fc;
             font-family: 'Inter', sans-serif;
         }
+
         header {
             background-color: #8dbd8d;
             color: #333;
         }
+
         .table thead {
             background-color: #e0ccff;
             color: #333;
         }
+
         .modal-header {
             background-color: #8dbd8d;
             color: #333;
         }
+
         .btn-primary {
             background-color: #b8e2d6;
             border: none;
             color: #333;
         }
+
         .font-bold {
             font-weight: bold;
         }
+
         .btn-primary:hover {
             background-color: #a6d8c8;
         }
+
         .btn-warning {
             background-color: #ffdab9;
             border: none;
             color: #333;
         }
+
         .btn-warning:hover {
             background-color: #fcd5b5;
         }
+
         .btn-danger {
             background-color: #f4cccc;
             border: none;
             color: #333;
         }
+
         .btn-danger:hover {
             background-color: #e6bcbc;
         }
+
         .badge.bg-success {
             background-color: #b5e7a0 !important;
             color: #333;
@@ -69,7 +80,6 @@
     <table class="table table-bordered table-hover mt-3">
         <thead>
         <tr>
-            <th>ID</th>
             <th>Port</th>
             <th>Server Host</th>
             <th>Server Port</th>
@@ -78,17 +88,20 @@
         </tr>
         </thead>
         <tbody>
-        <tr>
-            <td>1</td>
-            <td>8080</td>
-            <td>localhost</td>
-            <td>3000</td>
-            <td><span class="badge bg-success">Running</span></td>
-            <td>
-                <button class="btn btn-sm btn-danger">Stop</button>
-                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addChaosModal">Add Chaos</button>
-            </td>
-        </tr>
+            #foreach($d in $data)
+            <tr>
+                <td>$d.port</td>
+                <td>$d.serverHost</td>
+                <td>$d.serverPort</td>
+                <td><span class="badge bg-success">Running</span></td>
+                <td>
+                    <button class="btn btn-sm btn-danger">Stop</button>
+                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addChaosModal">Add
+                        Chaos
+                    </button>
+                </td>
+            </tr>
+            #end
         </tbody>
     </table>
 </div>
@@ -102,21 +115,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
+                <div class="create-new-proxy-form">
                     <div class="mb-3">
                         <label class="form-label">Port</label>
-                        <input type="number" class="form-control" placeholder="Enter port">
+                        <input type="number" class="form-control" name='port' placeholder="Enter port">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Server Host</label>
-                        <input type="text" class="form-control" placeholder="Enter server host">
+                        <input type="text" class="form-control" name='serverHost' placeholder="Enter server host">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Server Port</label>
-                        <input type="number" class="form-control" placeholder="Enter server port">
+                        <input type="number" class="form-control" name='serverPort' placeholder="Enter server port">
                     </div>
-                    <button type="submit" class="btn btn-primary">Start Proxy</button>
-                </form>
+                    <button type="submit" class="btn btn-primary start-proxy-form-btn">Start Proxy</button>
+                </div>
             </div>
         </div>
     </div>
@@ -162,5 +175,35 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<script>
+    $('.start-proxy-form-btn').on('click', (e) => {
+        e.preventDefault();
+
+        const $form = $('.create-new-proxy-form');
+        const port = $form.find('input[name=port]').val();
+        const serverHost = $form.find('input[name=serverHost]').val();
+        const serverPort = $form.find('input[name=serverPort]').val();
+
+        const data = {
+            port, serverHost, serverPort
+        }
+
+        $.ajax({
+            url: "/startProxy",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log("Success:", response);
+            },
+            error: function(xhr) {
+                console.error("Error:", xhr.responseText);
+            }
+        });
+    });
+</script>
 </body>
 </html>

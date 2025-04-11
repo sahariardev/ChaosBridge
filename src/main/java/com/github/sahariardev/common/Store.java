@@ -22,6 +22,10 @@ public class Store {
         return Collections.unmodifiableList(map.get(key));
     }
 
+    public List<String> keys() {
+        return map.keySet().stream().toList();
+    }
+
     public void put(String key, ObjectNode value) {
         List<ObjectNode> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
         list.add(value);

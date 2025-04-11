@@ -1,7 +1,7 @@
 <html>
 <body>
 <h2>Add chaos </h2>
-<form method="POST" action="/">
+<form method="POST">
     <label>Byte Per Second:</label><br>
     <input type="number" name="bytePerSecond"/><br><br>
 

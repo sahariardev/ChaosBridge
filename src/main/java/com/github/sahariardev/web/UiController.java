@@ -23,9 +23,9 @@ import java.util.concurrent.Executors;
 @Controller("/")
 public class UiController {
 
-//    @Inject
-//    @Named("virtual-thread-executor")
-//    private ExecutorService executorService;
+    @Inject
+    @Named("virtual-thread-executor")
+    private ExecutorService executorService;
 
     private static final Logger logger = LoggerFactory.getLogger(UiController.class);
 
@@ -45,8 +45,6 @@ public class UiController {
         Server server = new Server(Integer.parseInt(formData.get("port")),
                 formData.get("serverHost"),
                 Integer.parseInt(formData.get("serverPort")), key);
-
-        ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
         executorService.execute(() -> {
             try {

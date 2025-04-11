@@ -1,15 +1,16 @@
 package com.github.sahariardev.web;
 
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Singleton
+@Factory
 public class ExecutorServiceFactory {
 
-    @Singleton
+    @Bean
     @Named("virtual-thread-executor")
     public ExecutorService virtualThreadExecutor() {
         System.out.println("this is triggered");

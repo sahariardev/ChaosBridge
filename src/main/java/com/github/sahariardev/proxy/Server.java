@@ -6,6 +6,9 @@ import com.github.sahariardev.chaos.ChaosFactory;
 import com.github.sahariardev.common.Constant;
 import com.github.sahariardev.common.Store;
 import com.github.sahariardev.pipeline.Pipeline;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +22,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Server {
+
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
     private final int port;
 
@@ -73,10 +78,10 @@ public class Server {
                 Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode);
 
                 if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.DOWNSTREAM)) {
-                    upStreamPipeLine.addChaos(chaos);
+                    downStreamPipeLine.addChaos(chaos);
 
                 } else if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.UPSTREAM)) {
-                    downStreamPipeLine.addChaos(chaos);
+                    upStreamPipeLine.addChaos(chaos);
 
                 } else {
                     throw new IllegalStateException("Unexpected value: " + chaosConfigNode.get(Constant.LINE));
@@ -101,7 +106,7 @@ public class Server {
         try {
             pipeline.copy(inputStream, outputStream);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.debug("Failed to copy stream", e);
         }
     }
 }

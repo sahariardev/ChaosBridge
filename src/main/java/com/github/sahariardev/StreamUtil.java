@@ -24,7 +24,7 @@ public class StreamUtil {
             }
         } catch (SocketException e) {
             if ("Socket closed".equals(e.getMessage())) {
-                log.error("Socket closed", e);
+                log.info("Socket closed");
             } else {
                 throw e;
             }

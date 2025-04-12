@@ -15,10 +15,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class Server {
 
@@ -32,6 +29,12 @@ public class Server {
 
     private final String key;
 
+    private volatile boolean running = true;
+
+    private ServerSocket serverSocket;
+
+    private ExecutorService executorService;
+
     public Server(int port, String serverHost, int serverPort, String key) {
         this.port = port;
         this.serverHost = serverHost;
@@ -40,17 +43,19 @@ public class Server {
     }
 
     public void start() throws IOException {
-        try (
-                ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
-                ServerSocket serverSocket = new ServerSocket(port)) {
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        serverSocket = new ServerSocket(port);
 
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                executorService.execute(() -> {
-                    handleClient(clientSocket, serverHost, serverPort);
-                });
-            }
+        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+
+        while (running) {
+            Socket clientSocket = serverSocket.accept();
+            executorService.execute(() -> {
+                handleClient(clientSocket, serverHost, serverPort);
+            });
         }
+
+        stop();
     }
 
     public void handleClient(Socket clientSocket, String serverHost, int serverPort) {
@@ -101,7 +106,31 @@ public class Server {
         }
     }
 
-    public void copyStream(InputStream inputStream, OutputStream outputStream, Pipeline pipeline) {
+    public void stop() {
+        running = false;
+
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (executorService != null) {
+            executorService.shutdown();
+
+            try {
+                if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
+        }
+    }
+
+    private void copyStream(InputStream inputStream, OutputStream outputStream, Pipeline pipeline) {
         try {
             pipeline.copy(inputStream, outputStream);
         } catch (IOException e) {

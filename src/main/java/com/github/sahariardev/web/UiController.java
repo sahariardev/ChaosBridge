@@ -63,10 +63,11 @@ public class UiController {
         logger.info("[POST] Creating new proxy with data {}", formData);
 
         String key = String.format("%s:%s:%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
-        Store.INSTANCE.addServer(key);
         Server server = new Server(Integer.parseInt(formData.get("port")),
                 formData.get("serverHost"),
                 Integer.parseInt(formData.get("serverPort")), key);
+
+        Store.INSTANCE.addServer(key, server);
 
         executorService.execute(() -> {
             try {
@@ -84,6 +85,21 @@ public class UiController {
         response.put("status", "success");
         response.put("key", key);
         response.put("message", "Proxy started successfully " + formData);
+
+        return HttpResponse.ok(response);
+    }
+
+    @Delete("/proxy/{key}")
+    public HttpResponse<?> deleteProxy(@PathVariable String key) {
+        Server server = Store.INSTANCE.getServer(key);
+
+        if (server != null) {
+            server.stop();
+        }
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Stopped Server " + key + " data ");
 
         return HttpResponse.ok(response);
     }

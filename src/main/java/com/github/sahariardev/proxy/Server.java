@@ -43,19 +43,23 @@ public class Server {
     }
 
     public void start() throws IOException {
-        executorService = Executors.newVirtualThreadPerTaskExecutor();
-        serverSocket = new ServerSocket(port);
+        try {
+            executorService = Executors.newVirtualThreadPerTaskExecutor();
+            serverSocket = new ServerSocket(port);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 
-        while (running) {
-            Socket clientSocket = serverSocket.accept();
-            executorService.execute(() -> {
-                handleClient(clientSocket, serverHost, serverPort);
-            });
+            while (running) {
+                Socket clientSocket = serverSocket.accept();
+                executorService.execute(() -> {
+                    handleClient(clientSocket, serverHost, serverPort);
+                });
+            }
+
+            stop();
+        } catch (Exception e) {
+            logger.error("Error happend {}", key, e);
         }
-
-        stop();
     }
 
     public void handleClient(Socket clientSocket, String serverHost, int serverPort) {

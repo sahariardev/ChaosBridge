@@ -49,6 +49,7 @@ public class UiController {
             map.put("port", split[0]);
             map.put("serverHost", split[1]);
             map.put("serverPort", split[2]);
+            map.put("key", key);
 
             data.add(map);
         }
@@ -96,6 +97,8 @@ public class UiController {
         if (server != null) {
             server.stop();
         }
+
+        Store.INSTANCE.remove(key);
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");

@@ -1,15 +1,15 @@
 package com.github.sahariardev.common;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sahariardev.proxy.Server;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Store {
-    private static final ConcurrentHashMap<String, List<ObjectNode>> map = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, List<Map<String, Object>>> map = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Server> serverMap = new ConcurrentHashMap<>();
 
     public static final Store INSTANCE = new Store();
@@ -17,7 +17,7 @@ public class Store {
     private Store() {
     }
 
-    public List<ObjectNode> get(String key) {
+    public List<Map<String, Object>> get(String key) {
         if (!map.containsKey(key)) {
             return Collections.emptyList();
         }
@@ -33,8 +33,8 @@ public class Store {
         serverMap.put(key, server);
     }
 
-    public void put(String key, ObjectNode value) {
-        List<ObjectNode> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
+    public void put(String key, Map<String, Object> value) {
+        List<Map<String, Object>> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
         list.add(value);
     }
 

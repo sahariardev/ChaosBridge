@@ -1,5 +1,7 @@
 package com.github.sahariardev.chaos;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Map;
 
 public class EmptyChaos implements Chaos {
 
@@ -32,4 +35,18 @@ public class EmptyChaos implements Chaos {
         return inputStream;
     }
 
+    @Override
+    public void createNewChaos(ObjectNode objectNode) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public ChaosConfig chaosConfig() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public String getName() {
+        return "emptyChaos";
+    }
 }

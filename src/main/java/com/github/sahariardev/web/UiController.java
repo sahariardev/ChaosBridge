@@ -112,8 +112,7 @@ public class UiController {
     public HttpResponse<Map<String, String>> applyChaos(@PathVariable String key, @Body Map<String, String> formData) {
         int bytePerSecond = Integer.parseInt(formData.get("bytePerSecond"));
 
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode json = mapper.createObjectNode();
+        Map<String, Object> json = new HashMap<>();
         json.put(Constant.TYPE, "bandwidthChaos");
         json.put("bytePerSecond", bytePerSecond);
         json.put(Constant.LINE, Constant.DOWNSTREAM);

@@ -3,3 +3,9 @@ micronaut:
     port: 9090
   application:
     package: com.github.sahariardev.web
+  router:
+    static-resources:
+      default:
+        enabled: true
+        mapping: /**
+        paths: classpath:static

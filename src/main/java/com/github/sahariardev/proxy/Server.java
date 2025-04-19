@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 public class Server {
@@ -79,16 +80,16 @@ public class Server {
                     .name("downstream")
                     .build();
 
-            List<ObjectNode> chaosConfig = Store.INSTANCE.get(key);
+            List<Map<String, Object>> chaosConfig = Store.INSTANCE.get(key);
 
-            for (ObjectNode chaosConfigNode : chaosConfig) {
+            for (Map<String, Object> chaosConfigNode : chaosConfig) {
 
                 Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode);
 
-                if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.DOWNSTREAM)) {
+                if (chaosConfigNode.get(Constant.LINE).equals(Constant.DOWNSTREAM)) {
                     downStreamPipeLine.addChaos(chaos);
 
-                } else if (chaosConfigNode.get(Constant.LINE).asText().equals(Constant.UPSTREAM)) {
+                } else if (chaosConfigNode.get(Constant.LINE).equals(Constant.UPSTREAM)) {
                     upStreamPipeLine.addChaos(chaos);
 
                 } else {

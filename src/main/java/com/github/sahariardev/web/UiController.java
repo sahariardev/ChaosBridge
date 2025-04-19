@@ -1,8 +1,7 @@
 package com.github.sahariardev.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.sahariardev.common.Constant;
+import com.github.sahariardev.chaos.ChaosConfig;
+import com.github.sahariardev.chaos.ChaosType;
 import com.github.sahariardev.common.Store;
 import com.github.sahariardev.proxy.Server;
 import io.micronaut.http.HttpResponse;
@@ -20,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 @Controller("/")
 public class UiController {
@@ -90,6 +90,13 @@ public class UiController {
         return HttpResponse.ok(response);
     }
 
+    @Get("/chaosConfig")
+    public HttpResponse<?> getChaosConfigs() {
+        List<ChaosConfig> chaosConfigList = Stream.of(ChaosType.values()).filter(chaosType -> !chaosType.isForInternalUse())
+                .map(ChaosType::getConfig).toList();
+        return HttpResponse.ok(chaosConfigList);
+    }
+
     @Delete("/proxy/{key}")
     public HttpResponse<?> deleteProxy(@PathVariable String key) {
         Server server = Store.INSTANCE.getServer(key);
@@ -110,14 +117,8 @@ public class UiController {
     @Post("/addChaos/{key}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<Map<String, String>> applyChaos(@PathVariable String key, @Body Map<String, String> formData) {
-        int bytePerSecond = Integer.parseInt(formData.get("bytePerSecond"));
-
-        Map<String, Object> json = new HashMap<>();
-        json.put(Constant.TYPE, "bandwidthChaos");
-        json.put("bytePerSecond", bytePerSecond);
-        json.put(Constant.LINE, Constant.DOWNSTREAM);
-
-        Store.INSTANCE.put(key, json);
+        ChaosType chaosType = ChaosType.valueOf(formData.get("chaosType"));
+        chaosType.addChaos(formData, key);
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");

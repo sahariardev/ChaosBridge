@@ -1,6 +1,5 @@
 package com.github.sahariardev.chaos;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,22 +54,5 @@ public class LatencyChaos extends EmptyChaos {
                 throw e;
             }
         }
-    }
-
-    @Override
-    public ChaosConfig chaosConfig() {
-        ChaosConfig chaosConfig = new ChaosConfig(getName());
-        chaosConfig.addField("latencyChaos");
-        return chaosConfig;
-    }
-
-    @Override
-    public String getName() {
-        return "latencyChaos";
-    }
-
-    @Override
-    public void createNewChaos(ObjectNode objectNode) {
-        super.createNewChaos(objectNode);
     }
 }

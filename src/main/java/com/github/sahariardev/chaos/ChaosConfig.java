@@ -17,4 +17,11 @@ public class ChaosConfig {
         fields.add(field);
     }
 
+    public ChaosType getType() {
+        return type;
+    }
+
+    public List<String> getFields() {
+        return fields;
+    }
 }

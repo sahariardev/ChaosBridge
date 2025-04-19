@@ -44,7 +44,8 @@ const loadProxies = () => {
         url: "/proxy",
         type: "GET",
         success: function (data) {
-            $('#proxy-list-table').html('');
+            const $proxyListTable = $('#proxy-list-table');
+            $proxyListTable.html('');
 
             if (!data || !data.data) {
                 return;
@@ -59,16 +60,82 @@ const loadProxies = () => {
                             <td><span class="badge bg-success">Running</span></td>
                             <td>
                                 <button class="btn btn-sm btn-danger stop-btn" data-key=${d.key}>Stop</button>
-                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#addChaosModal">Add
-                                    Chaos
+                                <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal">
+                                    Add Chaos
                                 </button>
                             </td>
                         </tr>
                    `;
-                $('#proxy-list-table').append(proxyDetailHtmlTemplate);
-                $('#proxy-list-table').find('.stop-btn').on('click', (e) => {
+                $proxyListTable.append(proxyDetailHtmlTemplate);
+                $proxyListTable.find('.stop-btn').on('click', (e) => {
                     deleteProxy($(e.target).data()['key'], () => {
                         loadProxies();
+                    });
+                });
+
+                $proxyListTable.find('.add-chaos-btn').on('click', (e) => {
+                    $.ajax({
+                        url: "/chaosConfig/",
+                        type: "GET",
+                        success: function (response) {
+                            const $chaosTypeSelect = $('.chaos-type-select-form');
+                            $chaosTypeSelect.html('');
+
+                            for (let r of response) {
+                                let $option = $(`<option value="${r.type}">${r.type}</option>`);
+                                $chaosTypeSelect.append($option);
+                            }
+
+                            $chaosTypeSelect.on('change', function() {
+                                const selectedValue = $(this).val();
+                                const fields = response.filter(r => r.type === selectedValue)[0].fields;
+
+                                const $fieldContainer = $('.field-container');
+                                $fieldContainer.html('');
+
+                                for (let f of fields) {
+                                    let $field = $(`<div class="mb-3"><label class="form-label">${f}</label>
+                                    <input type="text" name="${f}" class="form-control"></div>`);
+                                    $fieldContainer.append($field);
+                                }
+                            });
+
+                            $chaosTypeSelect.trigger('change');
+                        },
+                        error: function (xhr) {
+                            console.error("Error:", xhr.responseText);
+                        }
+                    });
+                });
+
+                $('.apply-chaos-btn').on('click', (e) => {
+                    e.preventDefault();
+
+                    const $form = $('#add-chaos-form');
+                    const chaosType = $form.find('.chaos-type-select-form').val();
+                    const line = $form.find('.chaos-line-select-form').val();
+
+                    const formData = {
+                        chaosType, line
+                    };
+
+                    $form.find('.field-container').find('input').each((function () {
+                        formData[$(this).attr('name')] = $(this).val();
+                    }));
+
+                    $.ajax({
+                        url: "/addChaos/" + $form.data().key,
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify(formData),
+                        success: function (response) {
+                            loadProxies();
+                            cleanForm($form);
+                            $('.btn-close').trigger('click');
+                        },
+                        error: function (xhr) {
+                            console.error("Error:", xhr.responseText);
+                        }
                     });
                 });
             }

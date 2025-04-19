@@ -8,11 +8,9 @@ ChaosBridge is a lightweight chaos testing tool built using Java Sockets and Vir
 
 # Chaos Bridge API Documentation
 
-This document describes the REST endpoints exposed by the `UiController` in the Chaos Bridge application.
-
 ## Base URL
 
-All API endpoints are relative to the base URL of your application. By default, this is: http://localhost:9090
+All API endpoints are relative to the base URL of your application. By default, this is: http://localhost:{port}
 
 ## Endpoints
 
@@ -32,10 +30,15 @@ All API endpoints are relative to the base URL of your application. By default, 
 *   **Content Type:** `application/json`
 *   **Body:** A JSON object with a `data` array containing proxy information.
 
-**Example Usage:**
-```bash curl http://localhost:9090/ proxy```
+```json 
+{ "data": [ { "port": "8080", "serverHost": "example.com", "serverPort": "80", "key": "8080:example.com:80"  }, { "port": "8081", "serverHost": "test.com", "serverPort": "80", "key": "8081:test.com:80" } ] }
+```
 
-```json { "data": [ { "port": "8080", "serverHost": "example.com", "serverPort": "80", "key": "8080:example.com:80"  }, { "port": "8081", "serverHost": "test.com", "serverPort": "80", "key": "8081:test.com:80" } ] }```
+
+**Example Usage:**
+```bash
+curl http://localhost:9090/ proxy
+```
 
 ### 2. Create a New Proxy (`POST /proxy`)
 
@@ -53,7 +56,9 @@ All API endpoints are relative to the base URL of your application. By default, 
     *   `serverHost` (string, required): The hostname or IP address of the target server.
     *   `serverPort` (string, required): The port of the target server.
     
-```json { "port": "8082", "serverHost": "another.com", "serverPort": "80" }```
+```json 
+{ "port": "8082", "serverHost": "another.com", "serverPort": "80" }
+```
 
 **Response:**
 
@@ -64,11 +69,15 @@ All API endpoints are relative to the base URL of your application. By default, 
     *   `key` (string): The unique key for the created proxy (e.g., "8082:another.com:80").
     *   `message` (string): A success message.
 
-```json { "status": "success", "key": "8082:another.com:80" ,  "message": "Proxy started successfully {port=8082, serverHost=another.com,  serverPort=80}" }```
+```json 
+{ "status": "success", "key": "8082:another.com:80" ,  "message": "Proxy started successfully {port=8082, serverHost=another.com,  serverPort=80}" }
+```
 
 **Example Usage:**
 
-```bash curl -X POST -H "Content-Type: application/json" -d '{"port": "8082", "serverHost": "another.com", "serverPort": "80"}' http://localhost:9090/ proxy```
+```bash 
+curl -X POST -H "Content-Type: application/json" -d '{"port": "8082", "serverHost": "another.com", "serverPort": "80"}' http://localhost:9090/ proxy
+```
 
 ### 3. Get Chaos Configurations (`GET /chaosConfig`)
 
@@ -86,11 +95,15 @@ All API endpoints are relative to the base URL of your application. By default, 
 *   **Content Type:** `application/json`
 *   **Body:** A JSON array of chaos configuration objects.
 
-```json [ { "type": "BANDWIDTH", "fields": [ "bytePerSecond" ] }, { "type": "LATENCY", "fields": [ "latency" ] } ]```
+```json
+ [ { "type": "BANDWIDTH", "fields": [ "bytePerSecond" ] }, { "type": "LATENCY", "fields": [ "latency" ] } ]
+ ```
 
 **Example Usage:**
 
-```bash curl http://localhost:9090/ chaosConfig```
+```bash 
+curl http://localhost:9090/ chaosConfig
+```
 
 ### 4. Delete a Proxy (`DELETE /proxy/{key}`)
 
@@ -114,11 +127,15 @@ All API endpoints are relative to the base URL of your application. By default, 
     *   `status` (string): "success"
     *   `message` (string): A success message.
     
-```json { "status": "success", "message": "Stopped Server 8080:example.com:80 data " }```
+```json 
+{ "status": "success", "message": "Stopped Server 8080:example.com:80 data " }
+```
 
 **Example Usage:**
 
-```bash curl -X DELETE http://localhost:9090/ proxy/ 8080: example. com: 80```
+```bash 
+curl -X DELETE http://localhost:9090/ proxy/ 8080: example. com: 80
+```
 
 ### 5. Apply Chaos to a Proxy (`POST /addChaos/{key}`)
 
@@ -148,8 +165,12 @@ All API endpoints are relative to the base URL of your application. By default, 
     *   `status` (string): "success"
     *   `message` (string): A success message.
 
-```json { "status": "success", "message": "Chaos Added for 8080:example.com:80 data {chaosType=BANDWIDTH,  line=upstream, bytePerSecond=1024}"  }```
+```json
+ { "status": "success", "message": "Chaos Added for 8080:example.com:80 data {chaosType=BANDWIDTH,  line=upstream, bytePerSecond=1024}"  }
+```
 
 **Example Usage:**
 
-```bash curl -X POST -H "Content-Type: application/x-www-form- urlencoded"  -d "chaosType=BANDWIDTH& line= upstream& bytePerSecond= 1024"  http://localhost:9090/ addChaos/ 8080: example. com: 80```
+```bash 
+curl -X POST -H "Content-Type: application/x-www-form- urlencoded"  -d "chaosType=BANDWIDTH& line= upstream& bytePerSecond= 1024"  http://localhost:9090/ addChaos/ 8080: example. com: 80
+```

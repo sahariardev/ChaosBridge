@@ -22,13 +22,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 @Controller("/")
-public class UiController {
+public class ApiController {
 
     @Inject
     @Named("virtual-thread-executor")
     private ExecutorService executorService;
 
-    private static final Logger logger = LoggerFactory.getLogger(UiController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ApiController.class);
 
     @View("home")
     @Get("/")
@@ -123,6 +123,18 @@ public class UiController {
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "Chaos Added for " + key + " data " + formData);
+
+        return HttpResponse.ok(response);
+    }
+
+    @Post("/removeChaos/{key}/{chaosId}")
+    public HttpResponse<Map<String, String>> removeChaos(@PathVariable String key, @PathVariable String chaosId) {
+
+        Store.INSTANCE.get(key).removeIf(chaos -> chaos.get("id").equals(chaosId));
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Removed Chaos for " + key);
 
         return HttpResponse.ok(response);
     }

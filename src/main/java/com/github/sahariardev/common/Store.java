@@ -2,10 +2,7 @@ package com.github.sahariardev.common;
 
 import com.github.sahariardev.proxy.Server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Store {
@@ -33,7 +30,9 @@ public class Store {
         serverMap.put(key, server);
     }
 
-    public void put(String key, Map<String, Object> value) {
+    public synchronized void put(String key, Map<String, Object> value) {
+        UUID uuid = UUID.randomUUID();
+        value.put("id", uuid.toString());
         List<Map<String, Object>> list = map.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
         list.add(value);
     }

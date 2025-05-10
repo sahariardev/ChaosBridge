@@ -39,6 +39,19 @@ const deleteProxy = (key, callBack) => {
     });
 }
 
+const deleteChaos = (key, chaosId, callBack) => {
+    $.ajax({
+        url: `/removeChaos/${key}/${chaosId}`,
+        type: "DELETE",
+        success: function (response) {
+            callBack();
+        },
+        error: function (xhr) {
+            console.error("Error:", xhr.responseText);
+        }
+    });
+}
+
 const loadProxies = () => {
     $.ajax({
         url: "/proxy",
@@ -60,6 +73,9 @@ const loadProxies = () => {
                             <td><span class="badge bg-success">Running</span></td>
                             <td>
                                 <button class="btn btn-sm btn-danger stop-btn" data-key=${d.key}>Stop</button>
+                                <button class="btn btn-sm btn-warning chaos-list-btn" data-bs-toggle="modal" data-bs-target="#chaosList">
+                                    View Chaos List
+                                </button>
                                 <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal">
                                     Add Chaos
                                 </button>
@@ -78,6 +94,7 @@ const loadProxies = () => {
                         url: "/chaosConfig/",
                         type: "GET",
                         success: function (response) {
+                            $('#add-chaos-form').data(d);
                             const $chaosTypeSelect = $('.chaos-type-select-form');
                             $chaosTypeSelect.html('');
 
@@ -86,7 +103,7 @@ const loadProxies = () => {
                                 $chaosTypeSelect.append($option);
                             }
 
-                            $chaosTypeSelect.on('change', function() {
+                            $chaosTypeSelect.on('change', function () {
                                 const selectedValue = $(this).val();
                                 const fields = response.filter(r => r.type === selectedValue)[0].fields;
 
@@ -108,30 +125,42 @@ const loadProxies = () => {
                     });
                 });
 
-                $('.apply-chaos-btn').on('click', (e) => {
-                    e.preventDefault();
-
-                    const $form = $('#add-chaos-form');
-                    const chaosType = $form.find('.chaos-type-select-form').val();
-                    const line = $form.find('.chaos-line-select-form').val();
-
-                    const formData = {
-                        chaosType, line
-                    };
-
-                    $form.find('.field-container').find('input').each((function () {
-                        formData[$(this).attr('name')] = $(this).val();
-                    }));
-
+                $proxyListTable.find('.chaos-list-btn').on('click', (e) => {
                     $.ajax({
-                        url: "/addChaos/" + $form.data().key,
-                        type: "POST",
-                        contentType: "application/json",
-                        data: JSON.stringify(formData),
+                        url: "/allChaos/" + d.key,
+                        type: "GET",
                         success: function (response) {
-                            loadProxies();
-                            cleanForm($form);
-                            $('.btn-close').trigger('click');
+                            console.log(response);
+                            const $chaosListTable = $('#chaos-list-table');
+                            $chaosListTable.html('');
+
+                            if (!response || !response.message) {
+                                return;
+                            }
+
+                            for (let chaos of response.message) {
+                                const copyChaosData = JSON.parse(JSON.stringify(chaos));
+                                delete copyChaosData.type;
+                                delete copyChaosData.line;
+                                delete copyChaosData.id;
+
+                                const chaosDetailHtml =
+                                    `<tr>
+                                        <td>${chaos.type}</td>
+                                        <td>${chaos.line}</td>
+                                        <td>${JSON.stringify(copyChaosData, null, 2)}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger remove-chaos-btn" id="chaos-${chaos.id}" data-key=${chaos.id}>Remove</button>
+                                        </td>
+                                    </tr>`;
+
+                                $chaosListTable.append(chaosDetailHtml);
+
+                                $(`#chaos-${chaos.id}`).on('click', function () {
+                                    deleteChaos(d.key, chaos.id, () => loadProxies());
+                                    $('.btn-close').trigger('click');
+                                });
+                            }
                         },
                         error: function (xhr) {
                             console.error("Error:", xhr.responseText);
@@ -154,4 +183,35 @@ const cleanForm = ($form) => {
 
 $(function () {
     loadProxies();
+
+    $('.apply-chaos-btn').on('click', (e) => {
+        e.preventDefault();
+
+        const $form = $('#add-chaos-form');
+        const chaosType = $form.find('.chaos-type-select-form').val();
+        const line = $form.find('.chaos-line-select-form').val();
+
+        const formData = {
+            chaosType, line
+        };
+
+        $form.find('.field-container').find('input').each((function () {
+            formData[$(this).attr('name')] = $(this).val();
+        }));
+
+        $.ajax({
+            url: "/addChaos/" + $form.data().key,
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+                loadProxies();
+                cleanForm($form);
+                $('.btn-close').trigger('click');
+            },
+            error: function (xhr) {
+                console.error("Error:", xhr.responseText);
+            }
+        });
+    });
 });

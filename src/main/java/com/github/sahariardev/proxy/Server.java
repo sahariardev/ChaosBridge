@@ -1,6 +1,5 @@
 package com.github.sahariardev.proxy;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sahariardev.chaos.Chaos;
 import com.github.sahariardev.chaos.ChaosFactory;
 import com.github.sahariardev.common.Constant;
@@ -59,7 +58,7 @@ public class Server {
 
             stop();
         } catch (Exception e) {
-            logger.error("Error happend {}", key, e);
+            logger.error("Error happened {}", key, e);
         }
     }
 

@@ -122,7 +122,7 @@
 </div>
 
 <!-- Add Chaos Modal -->
-<div class="modal fade" id="addChaosModal" tabindex="-1" aria-labelledby="addChaosModalLabel" aria-hidden="true">
+<div class="modal fade" id="addChaosModal" tabindex="-1" aria-labelledby="Add Chaos Modal" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -148,6 +148,31 @@
                     </div>
                     <button type="submit" class="btn btn-warning apply-chaos-btn">Apply Chaos</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="chaosList" tabindex="-1" aria-labelledby="Chaos List View" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addChaosModalLabel">Chaos List View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered table-hover mt-3">
+                    <thead>
+                    <tr>
+                        <th>Chaos Type</th>
+                        <th>Line</th>
+                        <th>Detail</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="chaos-list-table">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

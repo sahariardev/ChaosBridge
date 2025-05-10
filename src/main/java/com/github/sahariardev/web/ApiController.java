@@ -114,8 +114,16 @@ public class ApiController {
         return HttpResponse.ok(response);
     }
 
+    @Get("/allChaos/{key}")
+    public HttpResponse<Map<String, Object>> allChaos(@PathVariable String key) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", Store.INSTANCE.getChaosList(key));
+
+        return HttpResponse.ok(response);
+    }
+
     @Post("/addChaos/{key}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<Map<String, String>> applyChaos(@PathVariable String key, @Body Map<String, String> formData) {
         ChaosType chaosType = ChaosType.valueOf(formData.get("chaosType"));
         chaosType.addChaos(formData, key);
@@ -127,10 +135,10 @@ public class ApiController {
         return HttpResponse.ok(response);
     }
 
-    @Post("/removeChaos/{key}/{chaosId}")
+    @Delete("/removeChaos/{key}/{chaosId}")
     public HttpResponse<Map<String, String>> removeChaos(@PathVariable String key, @PathVariable String chaosId) {
 
-        Store.INSTANCE.get(key).removeIf(chaos -> chaos.get("id").equals(chaosId));
+        Store.INSTANCE.remove(key, chaosId);
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");

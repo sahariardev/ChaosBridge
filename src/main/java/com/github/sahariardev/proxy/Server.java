@@ -63,52 +63,60 @@ public class Server {
     }
 
     public void handleClient(Socket clientSocket, String serverHost, int serverPort) {
-        try (
-                Socket targetSocket = new Socket(serverHost, serverPort);
-                InputStream clientInputStream = clientSocket.getInputStream();
-                OutputStream clientOutputStream = clientSocket.getOutputStream();
-                InputStream targetInputStream = targetSocket.getInputStream();
-                OutputStream targetOutputStream = targetSocket.getOutputStream();
-                ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()
-        ) {
-            Pipeline upStreamPipeLine = new Pipeline.Builder()
-                    .name("upstream")
-                    .build();
+        Socket targetSocket = null;
+        ExecutorService copyExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
-            Pipeline downStreamPipeLine = new Pipeline.Builder()
-                    .name("downstream")
-                    .build();
+        try {
+            targetSocket = new Socket(serverHost, serverPort);
+
+            InputStream clientInputStream = clientSocket.getInputStream();
+            OutputStream clientOutputStream = clientSocket.getOutputStream();
+            InputStream targetInputStream = targetSocket.getInputStream();
+            OutputStream targetOutputStream = targetSocket.getOutputStream();
+
+            Pipeline upStreamPipeLine = new Pipeline.Builder().name("upstream").build();
+            Pipeline downStreamPipeLine = new Pipeline.Builder().name("downstream").build();
 
             List<Map<String, Object>> chaosConfig = Store.INSTANCE.get(key);
-
             for (Map<String, Object> chaosConfigNode : chaosConfig) {
-
                 Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode);
-
                 if (chaosConfigNode.get(Constant.LINE).equals(Constant.DOWNSTREAM)) {
                     downStreamPipeLine.addChaos(chaos);
-
                 } else if (chaosConfigNode.get(Constant.LINE).equals(Constant.UPSTREAM)) {
                     upStreamPipeLine.addChaos(chaos);
-
-                } else {
-                    throw new IllegalStateException("Unexpected value: " + chaosConfigNode.get(Constant.LINE));
                 }
             }
 
-            Future<?> upStreamFuture = executorService.submit(() -> {
-                copyStream(clientInputStream, targetOutputStream, upStreamPipeLine);
-            });
-            Future<?> downStreamFuture = executorService.submit(() -> {
-                copyStream(targetInputStream, clientOutputStream, downStreamPipeLine);
-            });
+            Future<?> upStreamFuture = copyExecutor.submit(() -> copyStream(clientInputStream, targetOutputStream, upStreamPipeLine));
+            Future<?> downStreamFuture = copyExecutor.submit(() -> copyStream(targetInputStream, clientOutputStream, downStreamPipeLine));
 
-            upStreamFuture.get();
-            downStreamFuture.get();
-        } catch (ExecutionException | InterruptedException | IOException e) {
-            throw new RuntimeException(e);
+            // Wait for one direction to complete, then cancel the other
+            while (true) {
+                try {
+                    upStreamFuture.get(100, TimeUnit.MILLISECONDS);
+                    downStreamFuture.cancel(true);
+                    break;
+                } catch (TimeoutException ignored) {
+                }
+                try {
+                    downStreamFuture.get(100, TimeUnit.MILLISECONDS);
+                    upStreamFuture.cancel(true);
+                    break;
+                } catch (TimeoutException ignored) {
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("Exception in handleClient", e);
+        } finally {
+            copyExecutor.shutdownNow();
+            try {
+                if (targetSocket != null && !targetSocket.isClosed()) targetSocket.close();
+                if (clientSocket != null && !clientSocket.isClosed()) clientSocket.close();
+            } catch (IOException ignored) {}
         }
     }
+
 
     public void stop() {
         running = false;

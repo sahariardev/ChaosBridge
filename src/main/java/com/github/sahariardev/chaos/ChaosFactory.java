@@ -13,7 +13,11 @@ public class ChaosFactory {
         }
 
         if (chaosConfiguration.get(Constant.TYPE).equals(ChaosType.LATENCY.name())) {
-            return new BandwidthChaos(Integer.parseInt((String) chaosConfiguration.get("latency")));
+            return new LatencyChaos(Integer.parseInt((String) chaosConfiguration.get("latency")));
+        }
+
+        if (chaosConfiguration.get(Constant.TYPE).equals(ChaosType.PACKET_LOSS.name())) {
+            return new PacketLossChaos(Double.parseDouble((String) chaosConfiguration.get("packetLossRate")));
         }
 
         throw new IllegalStateException();

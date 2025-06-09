@@ -41,6 +41,22 @@ public enum ChaosType {
 
     }),
 
+    PACKET_LOSS("Packet Loss", (chaosType) -> {
+        ChaosConfig config = new ChaosConfig(chaosType);
+        config.addField("packetLossRate");
+        return config;
+    }, (dataMap, key) -> {
+
+        double packetLossRate = Double.parseDouble(dataMap.get("packetLossRate"));
+
+        Map<String, Object> chasoData = new HashMap<>();
+        chasoData.put(Constant.TYPE, "PACKET_LOSS");
+        chasoData.put("packetLossRate", packetLossRate);
+        chasoData.put(Constant.LINE, dataMap.get("line").toLowerCase());
+
+        Store.INSTANCE.put(key, chasoData);
+    }),
+
     EMPTY("EmptyChaos", true, null, null);
 
     private final String displayName;

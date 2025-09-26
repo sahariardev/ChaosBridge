@@ -161,7 +161,7 @@ const loadProxies = () => {
                             $chaosListTable.append(chaosDetailHtml);
 
                             $(`#chaos-${chaos.id}`).on('click', function () {
-                                deleteChaos(d.key, chaos.id, () => loadProxies());
+                                deleteChaos($(e.target).data()['key'], chaos.id, () => loadProxies());
                                 $('.btn-close').trigger('click');
                             });
                         }

@@ -64,88 +64,92 @@ const loadProxies = () => {
                 return;
             }
 
-            for (var d of data.data) {
+            for (const d of data.data) {
                 const proxyDetailHtmlTemplate =
-                    `<tr>
+                    `<tr id="${d.key}">
                             <td>${d.port}</td>
                             <td>${d.serverHost}</td>
                             <td>${d.serverPort}</td>
                             <td><span class="badge bg-success">Running</span></td>
                             <td>
                                 <button class="btn btn-sm btn-danger stop-btn" data-key=${d.key}>Stop</button>
-                                <button class="btn btn-sm btn-warning chaos-list-btn" data-bs-toggle="modal" data-bs-target="#chaosList">
+                                <button class="btn btn-sm btn-warning chaos-list-btn" data-bs-toggle="modal" data-bs-target="#chaosList" data-key=${d.key}>
                                     View Chaos List
                                 </button>
-                                <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal">
+                                <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal" data-key=${d.key}>
                                     Add Chaos
                                 </button>
                             </td>
                         </tr>
                    `;
                 $proxyListTable.append(proxyDetailHtmlTemplate);
-                $proxyListTable.find('.stop-btn').on('click', (e) => {
-                    deleteProxy($(e.target).data()['key'], () => {
-                        loadProxies();
-                    });
+            }
+
+            $proxyListTable.find('.stop-btn').on('click', (e) => {
+                deleteProxy($(e.target).data()['key'], () => {
+                    loadProxies();
                 });
+            });
 
-                $proxyListTable.find('.add-chaos-btn').on('click', (e) => {
-                    $.ajax({
-                        url: "/chaosConfig/",
-                        type: "GET",
-                        success: function (response) {
-                            $('#add-chaos-form').data(d);
-                            const $chaosTypeSelect = $('.chaos-type-select-form');
-                            $chaosTypeSelect.html('');
+            $proxyListTable.find('.add-chaos-btn').on('click', (e) => {
+                $.ajax({
+                    url: "/chaosConfig/",
+                    type: "GET",
+                    success: function (response) {
+                        $('#add-chaos-form').data({
+                            key: $(e.target).data()['key']
+                        });
 
-                            for (let r of response) {
-                                let $option = $(`<option value="${r.type}">${r.type}</option>`);
-                                $chaosTypeSelect.append($option);
-                            }
+                        const $chaosTypeSelect = $('.chaos-type-select-form');
+                        $chaosTypeSelect.html('');
 
-                            $chaosTypeSelect.on('change', function () {
-                                const selectedValue = $(this).val();
-                                const fields = response.filter(r => r.type === selectedValue)[0].fields;
-
-                                const $fieldContainer = $('.field-container');
-                                $fieldContainer.html('');
-
-                                for (let f of fields) {
-                                    let $field = $(`<div class="mb-3"><label class="form-label">${f}</label>
-                                    <input type="text" name="${f}" class="form-control"></div>`);
-                                    $fieldContainer.append($field);
-                                }
-                            });
-
-                            $chaosTypeSelect.trigger('change');
-                        },
-                        error: function (xhr) {
-                            console.error("Error:", xhr.responseText);
+                        for (let r of response) {
+                            let $option = $(`<option value="${r.type}">${r.type}</option>`);
+                            $chaosTypeSelect.append($option);
                         }
-                    });
-                });
 
-                $proxyListTable.find('.chaos-list-btn').on('click', (e) => {
-                    $.ajax({
-                        url: "/allChaos/" + d.key,
-                        type: "GET",
-                        success: function (response) {
-                            console.log(response);
-                            const $chaosListTable = $('#chaos-list-table');
-                            $chaosListTable.html('');
+                        $chaosTypeSelect.on('change', function () {
+                            const selectedValue = $(this).val();
+                            const fields = response.filter(r => r.type === selectedValue)[0].fields;
 
-                            if (!response || !response.message) {
-                                return;
+                            const $fieldContainer = $('.field-container');
+                            $fieldContainer.html('');
+
+                            for (let f of fields) {
+                                let $field = $(`<div class="mb-3"><label class="form-label">${f}</label>
+                                    <input type="text" name="${f}" class="form-control"></div>`);
+                                $fieldContainer.append($field);
                             }
+                        });
 
-                            for (let chaos of response.message) {
-                                const copyChaosData = JSON.parse(JSON.stringify(chaos));
-                                delete copyChaosData.type;
-                                delete copyChaosData.line;
-                                delete copyChaosData.id;
+                        $chaosTypeSelect.trigger('change');
+                    },
+                    error: function (xhr) {
+                        console.error("Error:", xhr.responseText);
+                    }
+                });
+            });
 
-                                const chaosDetailHtml =
-                                    `<tr>
+            $proxyListTable.find('.chaos-list-btn').on('click', (e) => {
+                $.ajax({
+                    url: "/allChaos/" + $(e.target).data()['key'],
+                    type: "GET",
+                    success: function (response) {
+                        const $chaosListTable = $('#chaos-list-table');
+                        $chaosListTable.html('');
+
+                        if (!response || !response.message) {
+                            return;
+                        }
+
+                        for (let chaos of response.message) {
+                            const copyChaosData = JSON.parse(JSON.stringify(chaos));
+                            delete copyChaosData.type;
+                            delete copyChaosData.line;
+                            delete copyChaosData.id;
+
+                            const chaosDetailHtml =
+                                `<tr>
                                         <td>${chaos.type}</td>
                                         <td>${chaos.line}</td>
                                         <td>${JSON.stringify(copyChaosData, null, 2)}</td>
@@ -154,20 +158,19 @@ const loadProxies = () => {
                                         </td>
                                     </tr>`;
 
-                                $chaosListTable.append(chaosDetailHtml);
+                            $chaosListTable.append(chaosDetailHtml);
 
-                                $(`#chaos-${chaos.id}`).on('click', function () {
-                                    deleteChaos(d.key, chaos.id, () => loadProxies());
-                                    $('.btn-close').trigger('click');
-                                });
-                            }
-                        },
-                        error: function (xhr) {
-                            console.error("Error:", xhr.responseText);
+                            $(`#chaos-${chaos.id}`).on('click', function () {
+                                deleteChaos(d.key, chaos.id, () => loadProxies());
+                                $('.btn-close').trigger('click');
+                            });
                         }
-                    });
+                    },
+                    error: function (xhr) {
+                        console.error("Error:", xhr.responseText);
+                    }
                 });
-            }
+            });
         },
         error: function (xhr) {
             console.error("Error:", xhr.responseText);

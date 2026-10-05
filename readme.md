@@ -58,6 +58,21 @@ curl -X POST http://localhost:9091/addChaos/8080:example.com:80 \
 curl -X DELETE http://localhost:9091/proxy/8080:example.com:80
 ```
 
+## Docker
+
+A published image is available on Docker Hub:
+
+```bash
+docker run --rm -p 9091:9091 sahariardev/chaosbridge:latest
+```
+
+The console is then available at `http://localhost:9091`. To build the image yourself:
+
+```bash
+docker build -t sahariardev/chaosbridge:latest .
+docker run --rm -p 9091:9091 sahariardev/chaosbridge:latest
+```
+
 ## API reference
 
 Base URL: `http://localhost:{port}` (default `http://localhost:9091`). All responses are JSON.

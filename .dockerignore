@@ -1,0 +1,31 @@
+# Build output is produced inside the image.
+build/
+out/
+bin/
+target/
+
+# Gradle
+.gradle/
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+*.iws
+*.ipr
+
+# VCS and CI
+.git/
+.gitignore
+.github/
+
+# Documentation site and assets not needed for the image
+docs/
+cover.png
+readme.md
+
+# Logs and local env files
+logs/
+*.log
+.env
+.env.*

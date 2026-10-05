@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="ChaosBridge - a lightweight chaos testing tool for building resilient systems with Java Sockets and Virtual Threads."/>
+    <meta name="theme-color" content="#1c1c1c"/>
+    <title>ChaosBridge · Chaos testing for resilient systems</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link rel="icon" href="assets/cover.png" type="image/png"/>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div class="grid-backdrop" aria-hidden="true"></div>
+
+<header class="topbar">
+    <button class="topbar__menu" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="#top">
+        <span class="brand__mark">C</span>
+        <span class="brand__text">Chaos<span>Bridge</span></span>
+    </a>
+    <nav class="topbar__links" aria-label="External links">
+        <a href="#api">API</a>
+        <a href="#chaos-types">Chaos</a>
+        <a class="btn btn--ghost btn--sm" href="https://github.com/sahariardev/ChaosBridge" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            GitHub
+        </a>
+    </nav>
+</header>
+
+<div class="layout" id="top">
+    <aside class="sidebar" id="sidebar">
+        <nav aria-label="Documentation">
+            <p class="sidebar__title">Getting started</p>
+            <a href="#overview" class="sidebar__link">Overview</a>
+            <a href="#features" class="sidebar__link">Features</a>
+            <a href="#quick-start" class="sidebar__link">Quick start</a>
+            <a href="#configuration" class="sidebar__link">Configuration</a>
+
+            <p class="sidebar__title">Core concepts</p>
+            <a href="#chaos-types" class="sidebar__link">Chaos types</a>
+            <a href="#architecture" class="sidebar__link">Architecture</a>
+
+            <p class="sidebar__title">Reference</p>
+            <a href="#api" class="sidebar__link">REST API</a>
+            <a href="#api-proxy" class="sidebar__link sidebar__link--nested">Proxies</a>
+            <a href="#api-chaos" class="sidebar__link sidebar__link--nested">Chaos</a>
+            <a href="#errors" class="sidebar__link">Error handling</a>
+            <a href="#testing" class="sidebar__link">Testing</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <section class="hero" id="overview">
+            <img class="hero__logo" src="assets/cover.png" alt="ChaosBridge logo" width="140" height="140"/>
+            <span class="pill">Java 21 · Virtual Threads · Micronaut</span>
+            <h1>Chaos testing for <span class="text-brand">resilient</span> systems</h1>
+            <p class="hero__lead">
+                ChaosBridge is a lightweight TCP chaos proxy built on Java Sockets and Project Loom virtual
+                threads. Simulate latency, packet loss and bandwidth limits on the wire to prove your
+                systems survive the real world.
+            </p>
+            <div class="hero__actions">
+                <a class="btn btn--primary" href="#quick-start">Get started</a>
+                <a class="btn btn--ghost" href="#api">Browse the API</a>
+            </div>
+            <div class="hero__terminal" aria-hidden="true">
+                <div class="terminal__bar"><span></span><span></span><span></span><em>chaos-bridge</em></div>
+<pre><code><span class="tok-cmd">$</span> curl -X POST http://localhost:9091/proxy \
+    -H <span class="tok-str">"Content-Type: application/json"</span> \
+    -d <span class="tok-str">'{"port":"8080","serverHost":"example.com","serverPort":"80"}'</span>
+
+<span class="tok-key">{ "status"</span>: <span class="tok-str">"success"</span>, <span class="tok-key">"key"</span>: <span class="tok-str">"8080:example.com:80"</span> <span class="tok-key">}</span></code></pre>
+            </div>
+        </section>
+
+        <section class="section" id="features">
+            <p class="eyebrow">Why ChaosBridge</p>
+            <h2>Failure injection without the ceremony</h2>
+            <p class="section__lead">No agents, no sidecars, no service mesh. A single JVM process sits between your client and server and shapes the traffic.</p>
+            <div class="cards">
+                <article class="card">
+                    <div class="card__icon">⚡</div>
+                    <h3>Virtual threads</h3>
+                    <p>Every proxy and every connection stream runs on a Project Loom virtual thread, so hundreds of concurrent tunnels stay cheap.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon">🧪</div>
+                    <h3>Wire-level chaos</h3>
+                    <p>Latency, packet loss and bandwidth throttling are applied to the raw byte stream — independent of protocol or language.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon">🔌</div>
+                    <h3>REST controlled</h3>
+                    <p>Start proxies and attach chaos profiles at runtime over a small JSON API. Perfect for CI pipelines and test harnesses.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon">🪶</div>
+                    <h3>Tiny footprint</h3>
+                    <p>Built on Micronaut and plain sockets. No database, no message broker — just a fast embedded HTTP server and a concurrent store.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon">🎛️</div>
+                    <h3>Upstream &amp; downstream</h3>
+                    <p>Target each direction independently. Break the request path, the response path, or both.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon">🧭</div>
+                    <h3>Built-in console</h3>
+                    <p>A Velocity + Bootstrap web UI lets you start proxies and manage chaos profiles straight from the browser.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="quick-start">
+            <p class="eyebrow">Get running</p>
+            <h2>Quick start</h2>
+            <p class="section__lead">ChaosBridge needs JDK 21+. Clone the repository and start the server with the Gradle wrapper.</p>
+
+            <div class="steps">
+                <div class="step">
+                    <span class="step__index">1</span>
+                    <div class="step__body">
+                        <h3>Build &amp; run</h3>
+                        <div class="code">
+                            <button class="code__copy" data-copy>Copy</button>
+<pre><code>./gradlew run</code></pre>
+                        </div>
+                        <p>The API listens on <code>http://localhost:9091</code> and the console is served at <code>http://localhost:9091/</code>.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step__index">2</span>
+                    <div class="step__body">
+                        <h3>Start a proxy</h3>
+                        <p>Create a tunnel that forwards <code>localhost:8080</code> to <code>example.com:80</code>.</p>
+                        <div class="code">
+                            <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X POST http://localhost:9091/proxy \
+  -H "Content-Type: application/json" \
+  -d '{"port":"8080","serverHost":"example.com","serverPort":"80"}'</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step__index">3</span>
+                    <div class="step__body">
+                        <h3>Inject chaos</h3>
+                        <p>Add 2 seconds of downstream latency to every response.</p>
+                        <div class="code">
+                            <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X POST "http://localhost:9091/addChaos/8080:example.com:80" \
+  -H "Content-Type: application/json" \
+  -d '{"chaosType":"LATENCY","line":"downstream","latency":"2"}'</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step__index">4</span>
+                    <div class="step__body">
+                        <h3>Verify your client</h3>
+                        <p>Point your application at <code>localhost:8080</code> instead of the real host and watch how it behaves under stress.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="configuration">
+            <p class="eyebrow">Reference</p>
+            <h2>Configuration</h2>
+            <p class="section__lead">ChaosBridge is configured through <code>src/main/resources/application.yml</code>.</p>
+            <div class="code">
+                <button class="code__copy" data-copy>Copy</button>
+<pre><code>micronaut:
+  server:
+    port: 9091          <span class="tok-comment"># REST API + console port</span>
+  router:
+    static-resources:
+      default:
+        enabled: true
+        mapping: /**
+        paths: classpath:static
+
+jackson:
+  serialization-inclusion: NON_ABSENT   <span class="tok-comment"># keep empty arrays in JSON responses</span></code></pre>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Setting</th><th>Default</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>micronaut.server.port</code></td><td><code>9091</code></td><td>Port for the control-plane API and web console.</td></tr>
+                        <tr><td><code>micronaut.router.static-resources.default.paths</code></td><td><code>classpath:static</code></td><td>Location of the bundled console assets.</td></tr>
+                        <tr><td><code>chaosBridge.log.path</code> (system property)</td><td><code>logs/chaosBridge.log</code></td><td>Log file location; rolling daily, 10&nbsp;MB per file, 30 days retained.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section" id="chaos-types">
+            <p class="eyebrow">Core concepts</p>
+            <h2>Chaos types</h2>
+            <p class="section__lead">Each profile is applied to a single direction of a proxy: <code>upstream</code> (client → server) or <code>downstream</code> (server → client).</p>
+
+            <div class="chaos-grid">
+                <article class="chaos-card">
+                    <header>
+                        <span class="method method--get">BANDWIDTH</span>
+                        <h3>Bandwidth limit</h3>
+                    </header>
+                    <p>Throttles a direction to <code>bytePerSecond</code>. Each second the pipeline forwards at most one buffer of that size, then pauses.</p>
+                    <dl>
+                        <dt>bytePerSecond</dt><dd>integer · max bytes forwarded per second</dd>
+                        <dt>line</dt><dd>upstream | downstream</dd>
+                    </dl>
+                </article>
+                <article class="chaos-card">
+                    <header>
+                        <span class="method method--post">LATENCY</span>
+                        <h3>Added latency</h3>
+                    </header>
+                    <p>Delays every chunk by <code>latency</code> seconds before it is written to the destination stream.</p>
+                    <dl>
+                        <dt>latency</dt><dd>integer · delay in seconds</dd>
+                        <dt>line</dt><dd>upstream | downstream</dd>
+                    </dl>
+                </article>
+                <article class="chaos-card">
+                    <header>
+                        <span class="method method--delete">PACKET_LOSS</span>
+                        <h3>Packet loss</h3>
+                    </header>
+                    <p>Drops chunks with probability <code>packetLossRate</code>. A rate of <code>1.0</code> drops the entire direction.</p>
+                    <dl>
+                        <dt>packetLossRate</dt><dd>double · 0.0 to 1.0</dd>
+                        <dt>line</dt><dd>upstream | downstream</dd>
+                    </dl>
+                </article>
+            </div>
+
+            <div class="callout">
+                <strong>How it composes</strong>
+                <p>A proxy pipeline is built per connection by chaining chaos handlers through piped streams, then copying the resulting stream to the socket. Profiles can be added and removed at any time and apply to the next connection.</p>
+            </div>
+        </section>
+
+        <section class="section" id="architecture">
+            <p class="eyebrow">Under the hood</p>
+            <h2>Architecture</h2>
+            <p class="section__lead">One process, three cooperating layers.</p>
+            <div class="arch">
+                <div class="arch__row">
+                    <div class="arch__node arch__node--client">Client app</div>
+                    <div class="arch__arrow">⇄</div>
+                    <div class="arch__node arch__node--proxy">
+                        <span>ChaosBridge proxy</span>
+                        <small>virtual thread per connection</small>
+                    </div>
+                    <div class="arch__arrow">⇄</div>
+                    <div class="arch__node arch__node--server">Target service</div>
+                </div>
+                <ul class="arch__legend">
+                    <li><strong>ApiController</strong> — Micronaut REST controller that manages proxies and chaos profiles.</li>
+                    <li><strong>Server</strong> — accepts client sockets and forwards them to the target host over virtual threads.</li>
+                    <li><strong>Pipeline</strong> — assembles the configured <code>Chaos</code> handlers into a stream chain per direction.</li>
+                    <li><strong>Store</strong> — lock-free <code>ConcurrentHashMap</code> holding proxies and their chaos profiles.</li>
+                </ul>
+            </div>
+
+            <h3 class="subheading">Lifecycle of a connection</h3>
+            <ol class="timeline">
+                <li><span>Client connects to the proxy port.</span></li>
+                <li><span>The proxy opens a socket to the target host and reads any configured chaos profiles.</span></li>
+                <li><span>Two pipelines (upstream/downstream) chain the chaos handlers using piped streams.</span></li>
+                <li><span>Bytes are copied both ways on dedicated virtual threads until one side closes.</span></li>
+                <li><span>Both sockets are closed and the executor is released.</span></li>
+            </ol>
+        </section>
+
+        <section class="section" id="api">
+            <p class="eyebrow">Reference</p>
+            <h2>REST API</h2>
+            <p class="section__lead">All endpoints are relative to the base URL, by default <code>http://localhost:9091</code>. Responses are JSON.</p>
+
+            <h3 class="subheading" id="api-proxy">Proxies</h3>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--get">GET</span>
+                    <code>/proxy</code>
+                    <span class="endpoint__title">List active proxies</span>
+                </div>
+                <p>Returns every proxy currently registered in the store.</p>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>{
+  "data": [
+    { "port": "8080", "serverHost": "example.com", "serverPort": "80", "key": "8080:example.com:80" }
+  ]
+}</code></pre>
+                </div>
+            </article>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--post">POST</span>
+                    <code>/proxy</code>
+                    <span class="endpoint__title">Create a proxy</span>
+                </div>
+                <p>Starts a new listening proxy and registers it. The proxy is keyed by <code>port:serverHost:serverPort</code>.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>port</code></td><td>string</td><td>yes</td><td>Local port the proxy listens on.</td></tr>
+                            <tr><td><code>serverHost</code></td><td>string</td><td>yes</td><td>Target hostname or IP.</td></tr>
+                            <tr><td><code>serverPort</code></td><td>string</td><td>yes</td><td>Target port.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X POST http://localhost:9091/proxy \
+  -H "Content-Type: application/json" \
+  -d '{"port":"8082","serverHost":"another.com","serverPort":"80"}'
+
+# 200 OK
+{ "status": "success", "key": "8082:another.com:80", "message": "Proxy started successfully ..." }</code></pre>
+                </div>
+            </article>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--delete">DELETE</span>
+                    <code>/proxy/{key}</code>
+                    <span class="endpoint__title">Stop a proxy</span>
+                </div>
+                <p>Stops the listening socket and removes the proxy and its chaos profiles from the store.</p>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X DELETE http://localhost:9091/proxy/8080:example.com:80
+
+# 200 OK
+{ "status": "success", "message": "Stopped Server 8080:example.com:80 data " }</code></pre>
+                </div>
+            </article>
+
+            <h3 class="subheading" id="api-chaos">Chaos profiles</h3>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--get">GET</span>
+                    <code>/chaosConfig</code>
+                    <span class="endpoint__title">Describe available chaos types</span>
+                </div>
+                <p>Returns the public chaos types and the fields each one accepts. Internal-only types are hidden.</p>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>[
+  { "type": "BANDWIDTH",   "fields": ["bytePerSecond"] },
+  { "type": "LATENCY",     "fields": ["latency"] },
+  { "type": "PACKET_LOSS", "fields": ["packetLossRate"] }
+]</code></pre>
+                </div>
+            </article>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--post">POST</span>
+                    <code>/addChaos/{key}</code>
+                    <span class="endpoint__title">Attach a chaos profile</span>
+                </div>
+                <p>Adds a chaos profile to the proxy identified by <code>{key}</code>. Accepts JSON or form-encoded bodies.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>chaosType</code></td><td>string</td><td>yes</td><td><code>BANDWIDTH</code>, <code>LATENCY</code> or <code>PACKET_LOSS</code>.</td></tr>
+                            <tr><td><code>line</code></td><td>string</td><td>yes</td><td><code>upstream</code> or <code>downstream</code>.</td></tr>
+                            <tr><td><code>bytePerSecond</code></td><td>number</td><td>for BANDWIDTH</td><td>Max bytes forwarded per second.</td></tr>
+                            <tr><td><code>latency</code></td><td>number</td><td>for LATENCY</td><td>Delay in seconds.</td></tr>
+                            <tr><td><code>packetLossRate</code></td><td>number</td><td>for PACKET_LOSS</td><td>Drop probability between 0.0 and 1.0.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X POST http://localhost:9091/addChaos/8080:example.com:80 \
+  -H "Content-Type: application/json" \
+  -d '{"chaosType":"PACKET_LOSS","line":"upstream","packetLossRate":"0.3"}'
+
+# 200 OK
+{ "status": "success", "message": "Chaos Added for 8080:example.com:80 data ..." }</code></pre>
+                </div>
+            </article>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--get">GET</span>
+                    <code>/allChaos/{key}</code>
+                    <span class="endpoint__title">List chaos profiles</span>
+                </div>
+                <p>Returns every chaos profile attached to a proxy, including the generated <code>id</code> used to remove it.</p>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>{
+  "status": "success",
+  "message": [
+    { "id": "5f0c...", "type": "LATENCY", "line": "downstream", "latency": 2 }
+  ]
+}</code></pre>
+                </div>
+            </article>
+
+            <article class="endpoint">
+                <div class="endpoint__head">
+                    <span class="method method--delete">DELETE</span>
+                    <code>/removeChaos/{key}/{chaosId}</code>
+                    <span class="endpoint__title">Remove a chaos profile</span>
+                </div>
+                <p>Removes a single chaos profile from a proxy. The profile applies to new connections immediately.</p>
+                <div class="code">
+                    <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl -X DELETE http://localhost:9091/removeChaos/8080:example.com:80/5f0c...
+
+# 200 OK
+{ "status": "success", "message": "Removed Chaos for 8080:example.com:80" }</code></pre>
+                </div>
+            </article>
+        </section>
+
+        <section class="section" id="errors">
+            <p class="eyebrow">Reference</p>
+            <h2>Error handling</h2>
+            <p class="section__lead">Invalid input is rejected with a JSON body so clients can react instead of parsing stack traces.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Status</th><th>When</th><th>Body</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="status status--400">400</span></td><td>Missing fields, non-numeric port, unknown <code>chaosType</code>, or invalid chaos values.</td><td><code>{"status":"error","message":"..."}</code></td></tr>
+                        <tr><td><span class="status status--404">404</span></td><td>Chaos is attached to a proxy key that does not exist.</td><td><code>{"status":"error","message":"..."}</code></td></tr>
+                        <tr><td><span class="status status--200">200</span></td><td>Successful create, list or delete.</td><td><code>{"status":"success", ...}</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section" id="testing">
+            <p class="eyebrow">Quality</p>
+            <h2>Testing</h2>
+            <p class="section__lead">The suite boots a real Micronaut server and real TCP sockets, so chaos is verified on the wire rather than mocked.</p>
+            <div class="code">
+                <button class="code__copy" data-copy>Copy</button>
+<pre><code>./gradlew test</code></pre>
+            </div>
+            <div class="cards cards--tight">
+                <article class="card">
+                    <h3>ApiControllerIntegrationTest</h3>
+                    <p>Drives every REST endpoint over HTTP and asserts success and error contracts.</p>
+                </article>
+                <article class="card">
+                    <h3>ProxyChaosIntegrationTest</h3>
+                    <p>Starts an echo back-end and the real proxy, then observes latency, packet loss and bandwidth on the wire.</p>
+                </article>
+                <article class="card">
+                    <h3>ServerTest</h3>
+                    <p>Covers raw proxy lifecycle: forwarding, port release and duplicate-bind safety using dynamic ports.</p>
+                </article>
+                <article class="card">
+                    <h3>ChaosFactoryTest &amp; StoreTest</h3>
+                    <p>Regression tests for numeric type handling and the concurrent proxy/chaos store.</p>
+                </article>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div>ChaosBridge · A chaos testing tool for building resilient systems.</div>
+            <div class="footer__links">
+                <a href="https://github.com/sahariardev/ChaosBridge" target="_blank" rel="noopener">GitHub</a>
+                <a href="#top">Back to top ↑</a>
+            </div>
+        </footer>
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

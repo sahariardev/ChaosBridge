@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class PacketLossChaos extends EmptyChaos {
 
-    private static final Logger logger = LoggerFactory.getLogger(LatencyChaos.class);
+    private static final Logger logger = LoggerFactory.getLogger(PacketLossChaos.class);
 
     private static final int DEFAULT_CHUNK_SIZE = 1024 * 8;
 

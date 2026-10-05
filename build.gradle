@@ -39,8 +39,20 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.4")
     testImplementation("org.mockito:mockito-core:4.5.1")
     testImplementation("org.mockito:mockito-junit-jupiter:4.5.1")
+
+    // Micronaut integration testing: embedded server + HTTP client + JUnit 5 extension
+    testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("io.micronaut:micronaut-http-server-netty")
+    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testRuntimeOnly("io.micronaut:micronaut-http-client")
 }
 
 test {
     useJUnitPlatform()
+    // Log to a build-local, cross-platform location so tests work on Windows too.
+    systemProperty 'chaosBridge.log.path', "${layout.buildDirectory.get().asFile}/logs/chaosBridge-test.log"
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 }

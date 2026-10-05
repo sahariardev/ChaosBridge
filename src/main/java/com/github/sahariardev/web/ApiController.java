@@ -5,7 +5,6 @@ import com.github.sahariardev.chaos.ChaosType;
 import com.github.sahariardev.common.Store;
 import com.github.sahariardev.proxy.Server;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.views.View;
 import jakarta.inject.Inject;
@@ -45,10 +44,17 @@ public class ApiController {
 
         for (String key : keys) {
             Map<String, String> map = new HashMap<>();
-            String[] split = key.split(":");
-            map.put("port", split[0]);
-            map.put("serverHost", split[1]);
-            map.put("serverPort", split[2]);
+            // key format is "<port>:<serverHost>:<serverPort>". Parse from the outside in so
+            // hosts containing a colon (e.g. IPv6 literals) are still handled correctly.
+            int firstColon = key.indexOf(':');
+            int lastColon = key.lastIndexOf(':');
+            if (firstColon <= 0 || lastColon <= firstColon) {
+                logger.warn("Skipping malformed proxy key {}", key);
+                continue;
+            }
+            map.put("port", key.substring(0, firstColon));
+            map.put("serverHost", key.substring(firstColon + 1, lastColon));
+            map.put("serverPort", key.substring(lastColon + 1));
             map.put("key", key);
 
             data.add(map);
@@ -63,10 +69,27 @@ public class ApiController {
     public HttpResponse<?> addProxy(@Body Map<String, String> formData) {
         logger.info("[POST] Creating new proxy with data {}", formData);
 
-        String key = String.format("%s:%s:%s", formData.get("port"), formData.get("serverHost"), formData.get("serverPort"));
-        Server server = new Server(Integer.parseInt(formData.get("port")),
-                formData.get("serverHost"),
-                Integer.parseInt(formData.get("serverPort")), key);
+        String port = formData.get("port");
+        String serverHost = formData.get("serverHost");
+        String serverPort = formData.get("serverPort");
+
+        if (port == null || port.isBlank() || serverHost == null || serverHost.isBlank()
+                || serverPort == null || serverPort.isBlank()) {
+            return HttpResponse.badRequest(error("'port', 'serverHost' and 'serverPort' are required"));
+        }
+
+        final int parsedPort;
+        final int parsedServerPort;
+        try {
+            parsedPort = Integer.parseInt(port.trim());
+            parsedServerPort = Integer.parseInt(serverPort.trim());
+        } catch (NumberFormatException e) {
+            return HttpResponse.badRequest(error("'port' and 'serverPort' must be valid integers"));
+        }
+
+        String host = serverHost.trim();
+        String key = String.format("%s:%s:%s", parsedPort, host, parsedServerPort);
+        Server server = new Server(parsedPort, host, parsedServerPort, key);
 
         Store.INSTANCE.addServer(key, server);
 
@@ -125,8 +148,23 @@ public class ApiController {
 
     @Post("/addChaos/{key}")
     public HttpResponse<Map<String, String>> applyChaos(@PathVariable String key, @Body Map<String, String> formData) {
-        ChaosType chaosType = ChaosType.valueOf(formData.get("chaosType"));
-        chaosType.addChaos(formData, key);
+        if (Store.INSTANCE.getServer(key) == null) {
+            return HttpResponse.notFound(error("No proxy found for key " + key));
+        }
+
+        String chaosTypeName = formData.get("chaosType");
+        ChaosType chaosType;
+        try {
+            chaosType = ChaosType.valueOf(chaosTypeName);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return HttpResponse.badRequest(error("Unknown chaosType '" + chaosTypeName + "'"));
+        }
+
+        try {
+            chaosType.addChaos(formData, key);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return HttpResponse.badRequest(error("Invalid chaos configuration: " + e.getMessage()));
+        }
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
@@ -145,5 +183,12 @@ public class ApiController {
         response.put("message", "Removed Chaos for " + key);
 
         return HttpResponse.ok(response);
+    }
+
+    private static Map<String, String> error(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", message);
+        return response;
     }
 }

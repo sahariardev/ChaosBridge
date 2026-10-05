@@ -13,7 +13,6 @@ public class ExecutorServiceFactory {
     @Bean
     @Named("virtual-thread-executor")
     public ExecutorService virtualThreadExecutor() {
-        System.out.println("this is triggered");
         return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

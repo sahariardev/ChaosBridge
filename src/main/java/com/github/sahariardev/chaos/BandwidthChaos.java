@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class BandwidthChaos extends EmptyChaos {
 
-    private final Logger logger = LoggerFactory.getLogger(EmptyChaos.class);
+    private static final Logger logger = LoggerFactory.getLogger(BandwidthChaos.class);
 
     private final int bandwidth;
 

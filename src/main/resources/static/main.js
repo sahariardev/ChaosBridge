@@ -1,3 +1,11 @@
+const escapeHtml = (value) =>
+    String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
 $('.start-proxy-form-btn').on('click', (e) => {
     e.preventDefault();
 
@@ -65,18 +73,19 @@ const loadProxies = () => {
             }
 
             for (const d of data.data) {
+                const key = escapeHtml(d.key);
                 const proxyDetailHtmlTemplate =
-                    `<tr id="${d.key}">
-                            <td>${d.port}</td>
-                            <td>${d.serverHost}</td>
-                            <td>${d.serverPort}</td>
+                    `<tr id="${key}">
+                            <td>${escapeHtml(d.port)}</td>
+                            <td>${escapeHtml(d.serverHost)}</td>
+                            <td>${escapeHtml(d.serverPort)}</td>
                             <td><span class="badge bg-success">Running</span></td>
                             <td>
-                                <button class="btn btn-sm btn-danger stop-btn" data-key=${d.key}>Stop</button>
-                                <button class="btn btn-sm btn-warning chaos-list-btn" data-bs-toggle="modal" data-bs-target="#chaosList" data-key=${d.key}>
+                                <button class="btn btn-sm btn-danger stop-btn" data-key="${key}">Stop</button>
+                                <button class="btn btn-sm btn-warning chaos-list-btn" data-bs-toggle="modal" data-bs-target="#chaosList" data-key="${key}">
                                     View Chaos List
                                 </button>
-                                <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal" data-key=${d.key}>
+                                <button class="btn btn-sm btn-warning add-chaos-btn" data-bs-toggle="modal" data-bs-target="#addChaosModal" data-key="${key}">
                                     Add Chaos
                                 </button>
                             </td>
@@ -86,38 +95,38 @@ const loadProxies = () => {
             }
 
             $proxyListTable.find('.stop-btn').on('click', (e) => {
-                deleteProxy($(e.target).data()['key'], () => {
+                deleteProxy($(e.currentTarget).data('key'), () => {
                     loadProxies();
                 });
             });
 
             $proxyListTable.find('.add-chaos-btn').on('click', (e) => {
+                const proxyKey = $(e.currentTarget).data('key');
                 $.ajax({
-                    url: "/chaosConfig/",
+                    url: "/chaosConfig",
                     type: "GET",
                     success: function (response) {
-                        $('#add-chaos-form').data({
-                            key: $(e.target).data()['key']
-                        });
+                        $('#add-chaos-form').data('key', proxyKey);
 
                         const $chaosTypeSelect = $('.chaos-type-select-form');
                         $chaosTypeSelect.html('');
 
                         for (let r of response) {
-                            let $option = $(`<option value="${r.type}">${r.type}</option>`);
+                            let $option = $(`<option value="${escapeHtml(r.type)}">${escapeHtml(r.type)}</option>`);
                             $chaosTypeSelect.append($option);
                         }
 
-                        $chaosTypeSelect.on('change', function () {
+                        $chaosTypeSelect.off('change').on('change', function () {
                             const selectedValue = $(this).val();
-                            const fields = response.filter(r => r.type === selectedValue)[0].fields;
+                            const config = response.filter(r => r.type === selectedValue)[0];
+                            const fields = config ? config.fields : [];
 
                             const $fieldContainer = $('.field-container');
                             $fieldContainer.html('');
 
                             for (let f of fields) {
-                                let $field = $(`<div class="mb-3"><label class="form-label">${f}</label>
-                                    <input type="text" name="${f}" class="form-control"></div>`);
+                                let $field = $(`<div class="mb-3"><label class="form-label">${escapeHtml(f)}</label>
+                                    <input type="text" name="${escapeHtml(f)}" class="form-control"></div>`);
                                 $fieldContainer.append($field);
                             }
                         });
@@ -131,8 +140,9 @@ const loadProxies = () => {
             });
 
             $proxyListTable.find('.chaos-list-btn').on('click', (e) => {
+                const proxyKey = $(e.currentTarget).data('key');
                 $.ajax({
-                    url: "/allChaos/" + $(e.target).data()['key'],
+                    url: "/allChaos/" + proxyKey,
                     type: "GET",
                     success: function (response) {
                         const $chaosListTable = $('#chaos-list-table');
@@ -148,20 +158,21 @@ const loadProxies = () => {
                             delete copyChaosData.line;
                             delete copyChaosData.id;
 
+                            const chaosId = escapeHtml(chaos.id);
                             const chaosDetailHtml =
                                 `<tr>
-                                        <td>${chaos.type}</td>
-                                        <td>${chaos.line}</td>
-                                        <td>${JSON.stringify(copyChaosData, null, 2)}</td>
+                                        <td>${escapeHtml(chaos.type)}</td>
+                                        <td>${escapeHtml(chaos.line)}</td>
+                                        <td><pre class="mb-0">${escapeHtml(JSON.stringify(copyChaosData, null, 2))}</pre></td>
                                         <td>
-                                            <button class="btn btn-sm btn-danger remove-chaos-btn" id="chaos-${chaos.id}" data-key=${chaos.id}>Remove</button>
+                                            <button class="btn btn-sm btn-danger remove-chaos-btn" id="chaos-${chaosId}" data-key="${chaosId}" data-proxy-key="${escapeHtml(proxyKey)}">Remove</button>
                                         </td>
                                     </tr>`;
 
                             $chaosListTable.append(chaosDetailHtml);
 
-                            $(`#chaos-${chaos.id}`).on('click', function () {
-                                deleteChaos($(e.target).data()['key'], chaos.id, () => loadProxies());
+                            $(`#chaos-${chaosId}`).on('click', function () {
+                                deleteChaos($(this).data('proxy-key'), chaos.id, () => loadProxies());
                                 $('.btn-close').trigger('click');
                             });
                         }
@@ -179,7 +190,7 @@ const loadProxies = () => {
 }
 
 const cleanForm = ($form) => {
-    $form.find('input').each(() => {
+    $form.find('input').each(function () {
         $(this).val('');
     });
 }
@@ -198,12 +209,12 @@ $(function () {
             chaosType, line
         };
 
-        $form.find('.field-container').find('input').each((function () {
+        $form.find('.field-container').find('input').each(function () {
             formData[$(this).attr('name')] = $(this).val();
-        }));
+        });
 
         $.ajax({
-            url: "/addChaos/" + $form.data().key,
+            url: "/addChaos/" + $form.data('key'),
             type: "POST",
             contentType: "application/json",
             data: JSON.stringify(formData),

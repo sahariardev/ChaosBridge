@@ -1,176 +1,265 @@
 # ChaosBridge
+
 A Chaos Testing Tool for Building Resilient Systems
 
 <img src="./cover.png" alt="ChaosBridge Logo" width="300">
 
+[![Build](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
+[![Micronaut](https://img.shields.io/badge/Micronaut-4.2.1-14a3a3)](https://micronaut.io/)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-3ecf8e)](https://sahariardev.github.io/ChaosBridge/)
+
 ### Overview
-ChaosBridge is a lightweight chaos testing tool built using Java Sockets and Virtual Threads (Project Loom). It helps developers simulate real-world failures (latency, packet loss, disconnections) to improve system reliability.
 
-# Chaos Bridge API Documentation
+ChaosBridge is a lightweight chaos testing tool built using Java Sockets and Virtual Threads
+(Project Loom). It sits between your client and a target server and simulates real-world failures —
+latency, packet loss and bandwidth throttling — so you can prove your systems stay reliable when the
+network does not.
 
-## Base URL
+> 📚 **Full documentation:** https://sahariardev.github.io/ChaosBridge/
+> (source lives in [`docs/`](./docs) and is deployed to GitHub Pages)
 
-All API endpoints are relative to the base URL of your application. By default, this is: http://localhost:{port}
+### Features
 
-## Endpoints
+- **Wire-level chaos** — failure injection happens on the raw byte stream, independent of protocol.
+- **Virtual threads** — one virtual thread per connection via Project Loom, so concurrency is cheap.
+- **REST controlled** — start proxies and attach chaos profiles at runtime for use in CI pipelines.
+- **Directional** — apply chaos to `upstream` (client → server), `downstream`, or both.
+- **Small footprint** — an embedded Micronaut server and a concurrent in-memory store, no database.
+- **Built-in console** — manage proxies and chaos profiles from the browser.
 
-### 1. Get All Proxies (`GET /proxy`)
+### Requirements
 
-**Description:** Retrieves a list of all active proxies.
+- JDK 21 or newer
+- No external services
 
-**Method:** `GET`
+## Quick start
 
-**URL:** `/proxy`
-
-**Request Body:** None
-
-**Response:**
-
-*   **Status Code:** `200 OK`
-*   **Content Type:** `application/json`
-*   **Body:** A JSON object with a `data` array containing proxy information.
-
-```json 
-{ "data": [ { "port": "8080", "serverHost": "example.com", "serverPort": "80", "key": "8080:example.com:80"  }, { "port": "8081", "serverHost": "test.com", "serverPort": "80", "key": "8081:test.com:80" } ] }
-```
-
-
-**Example Usage:**
 ```bash
-curl http://localhost:9090/ proxy
+# Start the control plane (API + web console)
+./gradlew run
 ```
 
-### 2. Create a New Proxy (`POST /proxy`)
+The API and console are available at `http://localhost:9091`.
 
-**Description:** Creates and starts a new proxy server.
+```bash
+# 1. Start a proxy: localhost:8080 -> example.com:80
+curl -X POST http://localhost:9091/proxy \
+  -H "Content-Type: application/json" \
+  -d '{"port":"8080","serverHost":"example.com","serverPort":"80"}'
 
-**Method:** `POST`
+# 2. Add 2 seconds of downstream latency
+curl -X POST http://localhost:9091/addChaos/8080:example.com:80 \
+  -H "Content-Type: application/json" \
+  -d '{"chaosType":"LATENCY","line":"downstream","latency":"2"}'
 
-**URL:** `/proxy`
+# 3. Point your client at localhost:8080 and observe the behaviour
 
-**Request Body:**
-
-*   **Content Type:** `application/json`
-*   **Body:** A JSON object with the following fields:
-    *   `port` (string, required): The port on which the proxy will listen.
-    *   `serverHost` (string, required): The hostname or IP address of the target server.
-    *   `serverPort` (string, required): The port of the target server.
-    
-```json 
-{ "port": "8082", "serverHost": "another.com", "serverPort": "80" }
+# 4. Stop the proxy when you are done
+curl -X DELETE http://localhost:9091/proxy/8080:example.com:80
 ```
 
-**Response:**
+## API reference
 
-*   **Status Code:** `200 OK`
-*   **Content Type:** `application/json`
-*   **Body:** A JSON object with the following fields:
-    *   `status` (string): "success"
-    *   `key` (string): The unique key for the created proxy (e.g., "8082:another.com:80").
-    *   `message` (string): A success message.
+Base URL: `http://localhost:{port}` (default `http://localhost:9091`). All responses are JSON.
 
-```json 
-{ "status": "success", "key": "8082:another.com:80" ,  "message": "Proxy started successfully {port=8082, serverHost=another.com,  serverPort=80}" }
+| Method   | Path                              | Description                                  |
+|----------|-----------------------------------|----------------------------------------------|
+| `GET`    | `/`                               | Web console (Velocity + Bootstrap).          |
+| `GET`    | `/proxy`                          | List all active proxies.                     |
+| `POST`   | `/proxy`                          | Create and start a proxy.                    |
+| `DELETE` | `/proxy/{key}`                    | Stop and remove a proxy.                     |
+| `GET`    | `/chaosConfig`                    | List available chaos types and their fields. |
+| `POST`   | `/addChaos/{key}`                 | Attach a chaos profile to a proxy.           |
+| `GET`    | `/allChaos/{key}`                 | List a proxy's chaos profiles.               |
+| `DELETE` | `/removeChaos/{key}/{chaosId}`    | Remove a chaos profile from a proxy.         |
+
+A proxy is identified by the key `{port}:{serverHost}:{serverPort}`, which is returned when it is
+created.
+
+### 1. Get all proxies — `GET /proxy`
+
+```bash
+curl http://localhost:9091/proxy
 ```
-
-**Example Usage:**
-
-```bash 
-curl -X POST -H "Content-Type: application/json" -d '{"port": "8082", "serverHost": "another.com", "serverPort": "80"}' http://localhost:9090/ proxy
-```
-
-### 3. Get Chaos Configurations (`GET /chaosConfig`)
-
-**Description:** Retrieves a list of available chaos configurations.
-
-**Method:** `GET`
-
-**URL:** `/chaosConfig`
-
-**Request Body:** None
-
-**Response:**
-
-*   **Status Code:** `200 OK`
-*   **Content Type:** `application/json`
-*   **Body:** A JSON array of chaos configuration objects.
 
 ```json
- [ { "type": "BANDWIDTH", "fields": [ "bytePerSecond" ] }, { "type": "LATENCY", "fields": [ "latency" ] } ]
- ```
-
-**Example Usage:**
-
-```bash 
-curl http://localhost:9090/ chaosConfig
+{
+  "data": [
+    { "port": "8080", "serverHost": "example.com", "serverPort": "80", "key": "8080:example.com:80" }
+  ]
+}
 ```
 
-### 4. Delete a Proxy (`DELETE /proxy/{key}`)
+### 2. Create a proxy — `POST /proxy`
 
-**Description:** Stops and deletes a proxy server identified by its key.
+Request body (`application/json`):
 
-**Method:** `DELETE`
+| Field        | Type   | Required | Description                  |
+|--------------|--------|----------|------------------------------|
+| `port`       | string | yes      | Port the proxy listens on.   |
+| `serverHost` | string | yes      | Target hostname or IP.       |
+| `serverPort` | string | yes      | Target port.                 |
 
-**URL:** `/proxy/{key}`
+```bash
+curl -X POST http://localhost:9091/proxy \
+  -H "Content-Type: application/json" \
+  -d '{"port":"8082","serverHost":"another.com","serverPort":"80"}'
+```
 
-**Path Parameters:**
+```json
+{ "status": "success", "key": "8082:another.com:80", "message": "Proxy started successfully {port=8082, serverHost=another.com, serverPort=80}" }
+```
 
-*   `key` (string, required): The unique key of the proxy to delete (e.g., "8080:example.com:80").
+### 3. Delete a proxy — `DELETE /proxy/{key}`
 
-**Request Body:** None
+```bash
+curl -X DELETE http://localhost:9091/proxy/8080:example.com:80
+```
 
-**Response:**
-
-*   **Status Code:** `200 OK`
-*   **Content Type:** `application/json`
-*   **Body:** A JSON object with the following fields:
-    *   `status` (string): "success"
-    *   `message` (string): A success message.
-    
-```json 
+```json
 { "status": "success", "message": "Stopped Server 8080:example.com:80 data " }
 ```
 
-**Example Usage:**
+### 4. Get chaos configurations — `GET /chaosConfig`
 
-```bash 
-curl -X DELETE http://localhost:9090/ proxy/ 8080: example. com: 80
+```bash
+curl http://localhost:9091/chaosConfig
 ```
-
-### 5. Apply Chaos to a Proxy (`POST /addChaos/{key}`)
-
-**Description:** Applies a chaos configuration to a specific proxy.
-
-**Method:** `POST`
-
-**URL:** `/addChaos/{key}`
-
-**Path Parameters:**
-
-*   `key` (string, required): The unique key of the proxy to which chaos will be applied (e.g., "8080:example.com:80").
-
-**Request Body:**
-
-*   **Content Type:** `application/x-www-form-urlencoded`
-*   **Body:** Form data with the following fields:
-    *   `chaosType` (string, required): The type of chaos to apply (e.g., "BANDWIDTH", "LATENCY").
-    *   `line` (string, required): The line to apply the chaos (e.g., "upstream", "downstream").
-    *   Additional fields based on the selected `chaosType` (e.g., `bytePerSecond` for "BANDWIDTH", `latency` for "LATENCY").
-
-**Response:**
-
-*   **Status Code:** `200 OK`
-*   **Content Type:** `application/json`
-*   **Body:** A JSON object with the following fields:
-    *   `status` (string): "success"
-    *   `message` (string): A success message.
 
 ```json
- { "status": "success", "message": "Chaos Added for 8080:example.com:80 data {chaosType=BANDWIDTH,  line=upstream, bytePerSecond=1024}"  }
+[
+  { "type": "BANDWIDTH",   "fields": ["bytePerSecond"] },
+  { "type": "LATENCY",     "fields": ["latency"] },
+  { "type": "PACKET_LOSS", "fields": ["packetLossRate"] }
+]
 ```
 
-**Example Usage:**
+### 5. Apply chaos to a proxy — `POST /addChaos/{key}`
 
-```bash 
-curl -X POST -H "Content-Type: application/x-www-form- urlencoded"  -d "chaosType=BANDWIDTH& line= upstream& bytePerSecond= 1024"  http://localhost:9090/ addChaos/ 8080: example. com: 80
+Accepts `application/json` or `application/x-www-form-urlencoded`.
+
+| Field            | Type   | Required        | Description                              |
+|------------------|--------|-----------------|------------------------------------------|
+| `chaosType`      | string | yes             | `BANDWIDTH`, `LATENCY` or `PACKET_LOSS`. |
+| `line`           | string | yes             | `upstream` or `downstream`.              |
+| `bytePerSecond`  | number | for `BANDWIDTH` | Max bytes forwarded per second.          |
+| `latency`        | number | for `LATENCY`   | Delay in seconds.                        |
+| `packetLossRate` | number | for `PACKET_LOSS` | Drop probability between 0.0 and 1.0.  |
+
+```bash
+curl -X POST http://localhost:9091/addChaos/8080:example.com:80 \
+  -H "Content-Type: application/json" \
+  -d '{"chaosType":"PACKET_LOSS","line":"upstream","packetLossRate":"0.3"}'
 ```
+
+```json
+{ "status": "success", "message": "Chaos Added for 8080:example.com:80 data {chaosType=PACKET_LOSS, line=upstream, packetLossRate=0.3}" }
+```
+
+### 6. List chaos profiles — `GET /allChaos/{key}`
+
+```bash
+curl http://localhost:9091/allChaos/8080:example.com:80
+```
+
+```json
+{
+  "status": "success",
+  "message": [
+    { "id": "5f0c9c1e-...", "type": "PACKET_LOSS", "line": "upstream", "packetLossRate": 0.3 }
+  ]
+}
+```
+
+### 7. Remove a chaos profile — `DELETE /removeChaos/{key}/{chaosId}`
+
+```bash
+curl -X DELETE http://localhost:9091/removeChaos/8080:example.com:80/5f0c9c1e-...
+```
+
+```json
+{ "status": "success", "message": "Removed Chaos for 8080:example.com:80" }
+```
+
+### Error responses
+
+Invalid input is rejected with `400 Bad Request`; chaos attached to an unknown proxy returns
+`404 Not Found`. Both use the same shape:
+
+```json
+{ "status": "error", "message": "..." }
+```
+
+## Chaos types
+
+| Type          | Field            | Effect                                                       |
+|---------------|------------------|--------------------------------------------------------------|
+| `BANDWIDTH`   | `bytePerSecond`  | Forwards at most one buffer of that size each second.        |
+| `LATENCY`     | `latency`        | Delays each chunk by the given number of seconds.            |
+| `PACKET_LOSS` | `packetLossRate` | Drops chunks with the given probability (`1.0` = drop all).  |
+
+`line` selects the affected direction: `upstream` (client → server) or `downstream` (server → client).
+
+## Configuration
+
+`src/main/resources/application.yml`:
+
+```yaml
+micronaut:
+  server:
+    port: 9091
+  router:
+    static-resources:
+      default:
+        enabled: true
+        mapping: /**
+        paths: classpath:static
+
+jackson:
+  serialization-inclusion: NON_ABSENT
+```
+
+The log file location defaults to `logs/chaosBridge.log` and can be overridden with the
+`chaosBridge.log.path` system property.
+
+## Testing
+
+The test suite boots a real Micronaut server and real TCP sockets, so chaos is verified on the wire.
+
+```bash
+./gradlew test
+```
+
+- `ApiControllerIntegrationTest` — drives every REST endpoint over HTTP.
+- `ProxyChaosIntegrationTest` — end-to-end proxy with latency, packet loss and bandwidth chaos.
+- `ServerTest` — raw proxy lifecycle (forwarding, port release, duplicate bind).
+- `ChaosFactoryTest` / `StoreTest` — numeric type handling and the concurrent store.
+
+## Project structure
+
+```
+src/main/java/com/github/sahariardev/
+├── Application.java              # Micronaut entry point
+├── StreamUtil.java               # buffered stream copy helper
+├── chaos/                        # chaos profiles + factory + config metadata
+├── common/                       # in-memory Store and constants
+├── pipeline/                     # per-direction chaos pipeline
+├── proxy/                        # TCP proxy server
+└── web/                          # REST controller + executor factory
+src/main/resources/
+├── views/                        # Velocity templates for the web console
+└── static/                       # console JavaScript
+docs/                             # static GitHub Pages documentation site
+```
+
+## Documentation site
+
+The `docs/` folder contains a self-contained, Supabase-themed static site. Preview it locally with:
+
+```bash
+python -m http.server 8000 --directory docs
+# then open http://localhost:8000
+```
+
+It is deployed automatically to GitHub Pages by `.github/workflows/pages.yml` on every push to
+`main` that touches `docs/`. Alternatively, enable **Settings → Pages → Build from `main` / `/docs`**.

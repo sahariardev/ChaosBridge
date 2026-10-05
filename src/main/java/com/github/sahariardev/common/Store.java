@@ -38,11 +38,14 @@ public class Store {
     }
 
     public synchronized void remove(String key, String chaosId) {
-        chaosMap.get(key).removeIf(chaos -> chaos.get("id").equals(chaosId));
+        List<Map<String, Object>> chaosList = chaosMap.get(key);
+        if (chaosList != null && chaosId != null) {
+            chaosList.removeIf(chaos -> chaosId.equals(chaos.get("id")));
+        }
     }
 
     public List<Map<String, Object>> getChaosList(String key) {
-        return chaosMap.get(key);
+        return chaosMap.getOrDefault(key, Collections.emptyList());
     }
 
     public Server getServer(String key) {

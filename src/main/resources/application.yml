@@ -9,3 +9,9 @@ micronaut:
         enabled: true
         mapping: /**
         paths: classpath:static
+
+# Micronaut defaults to NON_EMPTY, which silently drops empty collections such as
+# {"data": []}. Keep empty arrays in responses so the documented API contract holds,
+# while still omitting nulls.
+jackson:
+  serialization-inclusion: NON_ABSENT

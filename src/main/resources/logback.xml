@@ -6,9 +6,12 @@
         </encoder>
     </appender>
 
+    <!-- Log directory is resolved from a system property so it works on Windows as well as Unix. -->
+    <property name="LOG_FILE" value="${chaosBridge.log.path:-logs/chaosBridge.log}"/>
+
     <!-- File appender -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/tmp/chaosBridge.log</file>
+        <file>${LOG_FILE}</file>
         <append>true</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -17,10 +20,10 @@
 
     <!-- Rolling file appender (recommended for production) -->
     <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/tmp/chaosBridge.log</file>
+        <file>${LOG_FILE}</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- Daily rollover with 30 days history -->
-            <fileNamePattern>/tmp/chaosBridge-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <!-- Each file max 10MB -->
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>

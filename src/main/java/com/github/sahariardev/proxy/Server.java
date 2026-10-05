@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -57,6 +58,13 @@ public class Server {
             }
 
             stop();
+        } catch (SocketException e) {
+            // Closing the server socket is how stop() unblocks accept(); that is not an error.
+            if (running) {
+                logger.error("Proxy {} stopped unexpectedly", key, e);
+            } else {
+                logger.debug("Proxy {} listener closed", key);
+            }
         } catch (Exception e) {
             logger.error("Error happened {}", key, e);
         }

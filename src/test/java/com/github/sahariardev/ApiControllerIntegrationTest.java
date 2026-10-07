@@ -55,15 +55,19 @@ class ApiControllerIntegrationTest {
 
         assertEquals(HttpStatus.OK, response.getStatus());
         assertNotNull(response.body());
-        assertTrue(response.body().contains("Chaos Bridge"), "home page should render the Velocity template");
+        assertTrue(response.body().contains("ChaosBridge"), "home page should render the Velocity template");
+        assertTrue(response.body().contains("Chaos dashboard"), "home page should render the dashboard");
     }
 
     @Test
     void staticResourcesAreServed() {
-        HttpResponse<String> response = client.toBlocking().exchange(HttpRequest.GET("/main.js"), String.class);
+        HttpResponse<String> mainJs = client.toBlocking().exchange(HttpRequest.GET("/main.js"), String.class);
+        assertEquals(HttpStatus.OK, mainJs.getStatus());
+        assertTrue(mainJs.body().contains("loadDashboard"));
 
-        assertEquals(HttpStatus.OK, response.getStatus());
-        assertTrue(response.body().contains("loadProxies"));
+        HttpResponse<String> consoleCss = client.toBlocking().exchange(HttpRequest.GET("/console.css"), String.class);
+        assertEquals(HttpStatus.OK, consoleCss.getStatus());
+        assertTrue(consoleCss.body().contains("--cb-brand"));
     }
 
     @Test

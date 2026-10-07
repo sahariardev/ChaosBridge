@@ -1,5 +1,6 @@
 package com.github.sahariardev.chaos;
 
+import com.github.sahariardev.metrics.ProxyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,11 @@ public class PacketLossChaos extends EmptyChaos {
     private final double packetLossRate;
 
     public PacketLossChaos(double packetLossRate) throws IOException {
-        super();
+        this(packetLossRate, ProxyMetrics.noop());
+    }
+
+    public PacketLossChaos(double packetLossRate, ProxyMetrics metrics) throws IOException {
+        super(metrics);
         this.packetLossRate = packetLossRate;
     }
 
@@ -42,6 +47,7 @@ public class PacketLossChaos extends EmptyChaos {
 
                 if (random.nextDouble() < packetLossRate) {
                     logger.info("dropping packet of size {} bytes", read);
+                    metrics.chunkDropped();
 
                     continue;
                 }

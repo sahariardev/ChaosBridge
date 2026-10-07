@@ -55,6 +55,7 @@
             <a href="#chaos-types" class="sidebar__link">Chaos types</a>
             <a href="#api" class="sidebar__link">REST API</a>
             <a href="#errors" class="sidebar__link">Errors</a>
+            <a href="#metrics" class="sidebar__link">Metrics &amp; dashboard</a>
 
             <p class="sidebar__title">Deploy</p>
             <a href="#docker" class="sidebar__link">Docker image</a>
@@ -274,6 +275,9 @@
                         <tr><td><span class="method method--post">POST</span></td><td><code>/addChaos/{key}</code></td><td>Attach a chaos profile to a proxy.</td></tr>
                         <tr><td><span class="method method--get">GET</span></td><td><code>/allChaos/{key}</code></td><td>List a proxy's chaos profiles.</td></tr>
                         <tr><td><span class="method method--delete">DELETE</span></td><td><code>/removeChaos/{key}/{chaosId}</code></td><td>Remove one chaos profile.</td></tr>
+                        <tr><td><span class="method method--get">GET</span></td><td><code>/metrics</code></td><td>Aggregate + per-proxy + per-host metrics.</td></tr>
+                        <tr><td><span class="method method--get">GET</span></td><td><code>/metrics/{key}</code></td><td>Metrics and active chaos for one proxy.</td></tr>
+                        <tr><td><span class="method method--get">GET</span></td><td><code>/prometheus</code></td><td>Prometheus text exposition format.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -429,6 +433,88 @@
                         <tr><td><span class="status status--200">200</span></td><td>Successful create, list or delete.</td><td><code>{"status":"success", ...}</code></td></tr>
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <section class="section" id="metrics">
+            <p class="eyebrow">Observe</p>
+            <h2>Metrics &amp; dashboard</h2>
+            <p class="section__lead">
+                Every proxy is instrumented in memory. The console ships with a live dashboard that
+                refreshes every few seconds, and the same data is available over JSON and Prometheus.
+            </p>
+
+            <div class="capabilities">
+                <div class="capability">
+                    <span class="capability__dot"></span>
+                    <div>
+                        <h3>Per-proxy counters</h3>
+                        <p>Connections (total, active, failed), upstream/downstream bytes, dropped, delayed and throttled chunks, and uptime.</p>
+                    </div>
+                </div>
+                <div class="capability">
+                    <span class="capability__dot"></span>
+                    <div>
+                        <h3>Host aggregation</h3>
+                        <p><code>GET /metrics</code> rolls proxies up by target host so you can watch a single backend at a glance.</p>
+                    </div>
+                </div>
+                <div class="capability">
+                    <span class="capability__dot"></span>
+                    <div>
+                        <h3>Live dashboard</h3>
+                        <p>The web console shows summary cards, a per-proxy table with active chaos and a detail modal for each proxy.</p>
+                    </div>
+                </div>
+                <div class="capability">
+                    <span class="capability__dot"></span>
+                    <div>
+                        <h3>Prometheus ready</h3>
+                        <p><code>GET /prometheus</code> exposes the same counters in the text exposition format for scraping.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="subheading">Aggregate metrics — <code>GET /metrics</code></h3>
+            <div class="code">
+                <button class="code__copy" data-copy>Copy</button>
+<pre><code>{
+  "totals": { "proxies": 1, "connections": 4, "activeConnections": 1,
+              "failedConnections": 0, "upstreamBytes": 512,
+              "downstreamBytes": 2048, "droppedChunks": 3, "chaosProfiles": 1 },
+  "hosts": [
+    { "host": "example.com", "proxies": 1, "activeConnections": 1,
+      "upstreamBytes": 512, "downstreamBytes": 2048, "droppedChunks": 3, "chaosProfiles": 1 }
+  ],
+  "data": [
+    { "key": "8080:example.com:80", "serverHost": "example.com", "serverPort": "80",
+      "port": "8080", "active": true, "connections": 4, "activeConnections": 1,
+      "failedConnections": 0, "upstreamBytes": 512, "downstreamBytes": 2048,
+      "droppedChunks": 3, "latencyChunks": 0, "throttledChunks": 0,
+      "uptimeMs": 128400, "chaosCount": 1,
+      "chaos": [ { "id": "5f0c…", "type": "PACKET_LOSS", "line": "downstream", "packetLossRate": 0.3 } ] }
+  ]
+}</code></pre>
+            </div>
+
+            <h3 class="subheading">One proxy — <code>GET /metrics/{key}</code></h3>
+            <div class="code">
+                <button class="code__copy" data-copy>Copy</button>
+<pre><code>curl http://localhost:9091/metrics/8080:example.com:80</code></pre>
+            </div>
+
+            <h3 class="subheading">Prometheus — <code>GET /prometheus</code></h3>
+            <div class="code">
+                <button class="code__copy" data-copy>Copy</button>
+<pre><code># TYPE chaosbridge_upstream_bytes_total counter
+chaosbridge_upstream_bytes_total{proxy="8080:example.com:80",host="example.com",port="80"} 512
+chaosbridge_connections_active{proxy="8080:example.com:80",host="example.com",port="80"} 1
+chaosbridge_dropped_chunks_total{proxy="8080:example.com:80",host="example.com",port="80"} 3</code></pre>
+            </div>
+
+            <div class="callout">
+                <strong>Available counters</strong>
+                <p><code>connections_total</code>, <code>connections_active</code>, <code>connections_failed_total</code>, <code>upstream_bytes_total</code>, <code>downstream_bytes_total</code>, <code>dropped_chunks_total</code>, <code>latency_chunks_total</code>, <code>throttled_chunks_total</code>, <code>chaos_profiles</code> and <code>proxy_active</code>.</p>
             </div>
         </section>
 

@@ -1,5 +1,6 @@
 package com.github.sahariardev.chaos;
 
+import com.github.sahariardev.metrics.ProxyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,14 @@ public class EmptyChaos implements Chaos {
 
     protected final PipedOutputStream outputStream;
 
+    protected final ProxyMetrics metrics;
+
     public EmptyChaos() throws IOException {
+        this(ProxyMetrics.noop());
+    }
+
+    public EmptyChaos(ProxyMetrics metrics) throws IOException {
+        this.metrics = metrics == null ? ProxyMetrics.noop() : metrics;
         this.outputStream = new PipedOutputStream();
         this.inputStream = new PipedInputStream(outputStream);
     }

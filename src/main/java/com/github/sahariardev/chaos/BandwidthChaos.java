@@ -1,5 +1,6 @@
 package com.github.sahariardev.chaos;
 
+import com.github.sahariardev.metrics.ProxyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,11 @@ public class BandwidthChaos extends EmptyChaos {
     private final int bandwidth;
 
     public BandwidthChaos(int bandwidth) throws IOException {
-        super();
+        this(bandwidth, ProxyMetrics.noop());
+    }
+
+    public BandwidthChaos(int bandwidth, ProxyMetrics metrics) throws IOException {
+        super(metrics);
 
         //bandwidth is in bytePerSecond
         this.bandwidth = bandwidth;
@@ -36,6 +41,7 @@ public class BandwidthChaos extends EmptyChaos {
 
                 outputStream.write(buffer, 0, read);
                 outputStream.flush();
+                metrics.chunkThrottled();
 
                 try {
                     TimeUnit.SECONDS.sleep(1);

@@ -87,6 +87,9 @@ Base URL: `http://localhost:{port}` (default `http://localhost:9091`). All respo
 | `POST`   | `/addChaos/{key}`                 | Attach a chaos profile to a proxy.           |
 | `GET`    | `/allChaos/{key}`                 | List a proxy's chaos profiles.               |
 | `DELETE` | `/removeChaos/{key}/{chaosId}`    | Remove a chaos profile from a proxy.         |
+| `GET`    | `/metrics`                        | Aggregate, per-host and per-proxy metrics.   |
+| `GET`    | `/metrics/{key}`                  | Metrics and active chaos for one proxy.      |
+| `GET`    | `/prometheus`                     | Prometheus text exposition format.           |
 
 A proxy is identified by the key `{port}:{serverHost}:{serverPort}`, which is returned when it is
 created.
@@ -214,6 +217,24 @@ Invalid input is rejected with `400 Bad Request`; chaos attached to an unknown p
 | `PACKET_LOSS` | `packetLossRate` | Drops chunks with the given probability (`1.0` = drop all).  |
 
 `line` selects the affected direction: `upstream` (client → server) or `downstream` (server → client).
+
+## Metrics & dashboard
+
+The web console at `http://localhost:9091/` is a live dashboard showing active proxies, running
+chaos and traffic metrics. The same data is available via the API:
+
+- `GET /metrics` — totals, a per-host roll-up and a row per proxy.
+- `GET /metrics/{key}` — detailed counters and the active chaos list for one proxy.
+- `GET /prometheus` — Prometheus text exposition for scraping.
+
+Counters include total/active/failed connections, upstream and downstream bytes, dropped chunks
+(packet loss), delayed chunks (latency), throttled chunks (bandwidth), attached chaos profiles and
+uptime.
+
+```bash
+curl http://localhost:9091/metrics
+curl http://localhost:9091/prometheus
+```
 
 ## Configuration
 

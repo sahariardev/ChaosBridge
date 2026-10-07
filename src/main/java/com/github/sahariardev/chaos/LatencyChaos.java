@@ -1,5 +1,6 @@
 package com.github.sahariardev.chaos;
 
+import com.github.sahariardev.metrics.ProxyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,11 @@ public class LatencyChaos extends EmptyChaos {
     private final int latency;
 
     public LatencyChaos(int latency) throws IOException {
-        super();
+        this(latency, ProxyMetrics.noop());
+    }
+
+    public LatencyChaos(int latency, ProxyMetrics metrics) throws IOException {
+        super(metrics);
         this.latency = latency;
     }
 
@@ -41,6 +46,7 @@ public class LatencyChaos extends EmptyChaos {
                     Thread.currentThread().interrupt(); // Preserve interrupt status
                     break;
                 }
+                metrics.chunkDelayed();
 
                 outputStream.write(buffer, 0, read);
                 outputStream.flush();

@@ -1,6 +1,7 @@
 package com.github.sahariardev.chaos;
 
 import com.github.sahariardev.common.Constant;
+import com.github.sahariardev.metrics.ProxyMetrics;
 
 import java.io.IOException;
 import java.util.Map;
@@ -11,18 +12,22 @@ public class ChaosFactory {
     }
 
     public static Chaos buildChaos(Map<String, Object> chaosConfiguration) throws IOException {
+        return buildChaos(chaosConfiguration, ProxyMetrics.noop());
+    }
+
+    public static Chaos buildChaos(Map<String, Object> chaosConfiguration, ProxyMetrics metrics) throws IOException {
         Object type = chaosConfiguration.get(Constant.TYPE);
 
         if (ChaosType.BANDWIDTH.name().equals(type)) {
-            return new BandwidthChaos(toInt(chaosConfiguration.get("bytePerSecond"), "bytePerSecond"));
+            return new BandwidthChaos(toInt(chaosConfiguration.get("bytePerSecond"), "bytePerSecond"), metrics);
         }
 
         if (ChaosType.LATENCY.name().equals(type)) {
-            return new LatencyChaos(toInt(chaosConfiguration.get("latency"), "latency"));
+            return new LatencyChaos(toInt(chaosConfiguration.get("latency"), "latency"), metrics);
         }
 
         if (ChaosType.PACKET_LOSS.name().equals(type)) {
-            return new PacketLossChaos(toDouble(chaosConfiguration.get("packetLossRate"), "packetLossRate"));
+            return new PacketLossChaos(toDouble(chaosConfiguration.get("packetLossRate"), "packetLossRate"), metrics);
         }
 
         throw new IllegalArgumentException("Unsupported chaos type: " + type);

@@ -1,178 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Chaos Bridge</title>
+    <title>ChaosBridge · Console</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f9f9fc;
-            font-family: 'Inter', sans-serif;
-        }
-
-        header {
-            background-color: #8dbd8d;
-            color: #333;
-        }
-
-        .table thead {
-            background-color: #e0ccff;
-            color: #333;
-        }
-
-        .modal-header {
-            background-color: #8dbd8d;
-            color: #333;
-        }
-
-        .btn-primary {
-            background-color: #b8e2d6;
-            border: none;
-            color: #333;
-        }
-
-        .font-bold {
-            font-weight: bold;
-        }
-
-        .btn-primary:hover {
-            background-color: #a6d8c8;
-        }
-
-        .btn-warning {
-            background-color: #ffdab9;
-            border: none;
-            color: #333;
-        }
-
-        .btn-warning:hover {
-            background-color: #fcd5b5;
-        }
-
-        .btn-danger {
-            background-color: #f4cccc;
-            border: none;
-            color: #333;
-        }
-
-        .btn-danger:hover {
-            background-color: #e6bcbc;
-        }
-
-        .badge.bg-success {
-            background-color: #b5e7a0 !important;
-            color: #333;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/console.css">
 </head>
 <body>
-<header class="p-3 text-center">
-    <h1 class="font-bold">Chaos Bridge</h1>
-    <nav class="mt-2">
-        <a href="#" class="text-dark me-3" data-bs-toggle="modal" data-bs-target="#startProxyModal">Start Proxy</a>
-    </nav>
+<div class="cb-grid-bg" aria-hidden="true"></div>
+
+<header class="cb-topbar">
+    <div class="cb-topbar__inner">
+        <a class="cb-brand" href="/">
+            <span class="cb-brand__mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M4 19V10a8 8 0 0 1 16 0v9"/>
+                    <path d="M4 13.5h16"/>
+                    <path d="M8.5 10v9"/>
+                    <path d="M15.5 10v9"/>
+                </svg>
+            </span>
+            <span class="cb-brand__text">Chaos<span>Bridge</span></span>
+        </a>
+        <nav class="cb-topbar__nav">
+            <a href="#proxies">Proxies</a>
+            <a href="#hosts">Hosts</a>
+            <a href="/prometheus" target="_blank" rel="noopener">Metrics</a>
+            <button type="button" class="cb-btn cb-btn--primary" id="openStartProxy">Start proxy</button>
+        </nav>
+    </div>
 </header>
 
-<div class="container mt-5" id="home">
-    <h2 class="text-secondary">Active Proxies</h2>
-    <table class="table table-bordered table-hover mt-3">
-        <thead>
-        <tr>
-            <th>Port</th>
-            <th>Server Host</th>
-            <th>Server Port</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody id="proxy-list-table">
-        </tbody>
-    </table>
-</div>
+<main class="cb-container">
+    <div class="cb-page-head">
+        <div>
+            <p class="cb-eyebrow">Control plane</p>
+            <h1>Chaos dashboard</h1>
+            <p class="cb-muted">Live view of active proxies, running chaos and on-the-wire traffic metrics.</p>
+        </div>
+        <div class="cb-live"><span class="cb-live__dot"></span> Live · refreshes every 3s</div>
+    </div>
 
-<!-- Start Proxy Modal -->
+    <section class="cb-stats" aria-label="Summary">
+        <div class="cb-stat">
+            <span class="cb-stat__label">Active proxies</span>
+            <span class="cb-stat__value" id="stat-proxies">0</span>
+        </div>
+        <div class="cb-stat">
+            <span class="cb-stat__label">Active connections</span>
+            <span class="cb-stat__value" id="stat-active">0</span>
+        </div>
+        <div class="cb-stat">
+            <span class="cb-stat__label">Total connections</span>
+            <span class="cb-stat__value" id="stat-connections">0</span>
+        </div>
+        <div class="cb-stat">
+            <span class="cb-stat__label">Upstream</span>
+            <span class="cb-stat__value" id="stat-upstream">0 B</span>
+        </div>
+        <div class="cb-stat">
+            <span class="cb-stat__label">Downstream</span>
+            <span class="cb-stat__value" id="stat-downstream">0 B</span>
+        </div>
+        <div class="cb-stat">
+            <span class="cb-stat__label">Dropped chunks</span>
+            <span class="cb-stat__value cb-stat__value--rose" id="stat-dropped">0</span>
+        </div>
+    </section>
+
+    <section class="cb-panel" id="proxies">
+        <header class="cb-panel__head">
+            <h2>Proxies</h2>
+            <button type="button" class="cb-btn cb-btn--ghost cb-btn--sm" id="refreshBtn">Refresh</button>
+        </header>
+        <div class="cb-table-wrap">
+            <table class="cb-table">
+                <thead>
+                <tr>
+                    <th>Host</th>
+                    <th>Port</th>
+                    <th>Status</th>
+                    <th>Chaos</th>
+                    <th>Conns</th>
+                    <th>Up</th>
+                    <th>Down</th>
+                    <th>Dropped</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="proxy-list-table"></tbody>
+            </table>
+        </div>
+        <div class="cb-empty" id="proxies-empty">No proxies yet. Start one to begin injecting chaos.</div>
+    </section>
+
+    <section class="cb-panel" id="hosts">
+        <header class="cb-panel__head">
+            <h2>Hosts</h2>
+        </header>
+        <div class="cb-table-wrap">
+            <table class="cb-table">
+                <thead>
+                <tr>
+                    <th>Host</th>
+                    <th>Proxies</th>
+                    <th>Active conns</th>
+                    <th>Upstream</th>
+                    <th>Downstream</th>
+                    <th>Dropped</th>
+                    <th>Chaos profiles</th>
+                </tr>
+                </thead>
+                <tbody id="hosts-table"></tbody>
+            </table>
+        </div>
+        <div class="cb-empty" id="hosts-empty">No hosts are being proxied yet.</div>
+    </section>
+</main>
+
+<!-- Start Proxy modal -->
 <div class="modal fade" id="startProxyModal" tabindex="-1" aria-labelledby="startProxyModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="startProxyModalLabel">Start a New Proxy</h5>
+                <h5 class="modal-title" id="startProxyModalLabel">Start a new proxy</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="create-new-proxy-form">
-                    <div class="mb-3">
-                        <label class="form-label">Port</label>
-                        <input type="number" class="form-control" name='port' placeholder="Enter port">
+                <div id="start-proxy-form">
+                    <div class="cb-field">
+                        <label class="cb-label">Port</label>
+                        <input type="number" class="cb-input" name="port" placeholder="8080">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Server Host</label>
-                        <input type="text" class="form-control" name='serverHost' placeholder="Enter server host">
+                    <div class="cb-field">
+                        <label class="cb-label">Server host</label>
+                        <input type="text" class="cb-input" name="serverHost" placeholder="example.com">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Server Port</label>
-                        <input type="number" class="form-control" name='serverPort' placeholder="Enter server port">
+                    <div class="cb-field">
+                        <label class="cb-label">Server port</label>
+                        <input type="number" class="cb-input" name="serverPort" placeholder="80">
                     </div>
-                    <button type="submit" class="btn btn-primary start-proxy-form-btn">Start Proxy</button>
+                    <div class="cb-form-error" id="start-proxy-error" hidden></div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="cb-btn cb-btn--ghost" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="cb-btn cb-btn--primary start-proxy-form-btn">Start proxy</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Add Chaos Modal -->
-<div class="modal fade" id="addChaosModal" tabindex="-1" aria-labelledby="Add Chaos Modal" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Add Chaos modal -->
+<div class="modal fade" id="addChaosModal" tabindex="-1" aria-labelledby="addChaosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addChaosModalLabel">Add Chaos to Proxy</h5>
+                <h5 class="modal-title" id="addChaosModalLabel">Add chaos to proxy</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <p class="cb-muted cb-modal-target" id="add-chaos-target"></p>
                 <form id="add-chaos-form">
-                    <div class="mb-3">
-                        <label class="form-label">Select Chaos Type</label>
-                        <select class="form-select chaos-type-select-form">
+                    <div class="cb-field">
+                        <label class="cb-label">Chaos type</label>
+                        <select class="cb-select chaos-type-select-form"></select>
+                    </div>
+                    <div class="cb-field">
+                        <label class="cb-label">Line</label>
+                        <select class="cb-select chaos-line-select-form">
+                            <option value="upstream">upstream</option>
+                            <option value="downstream">downstream</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Select Line</label>
-                        <select class="form-select chaos-line-select-form">
-                            <option selected>Upstream</option>
-                            <option>Downstream</option>
-                        </select>
-                    </div>
-                    <div class="field-container">
-
-                    </div>
-                    <button type="submit" class="btn btn-warning apply-chaos-btn">Apply Chaos</button>
+                    <div class="field-container"></div>
+                    <div class="cb-form-error" id="add-chaos-error" hidden></div>
                 </form>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="cb-btn cb-btn--ghost" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="cb-btn cb-btn--primary apply-chaos-btn">Apply chaos</button>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="chaosList" tabindex="-1" aria-labelledby="Chaos List View" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Metrics modal -->
+<div class="modal fade" id="metricsModal" tabindex="-1" aria-labelledby="metricsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addChaosModalLabel">Chaos List View</h5>
+                <h5 class="modal-title" id="metricsModalLabel">Metrics</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <table class="table table-bordered table-hover mt-3">
-                    <thead>
-                    <tr>
-                        <th>Chaos Type</th>
-                        <th>Line</th>
-                        <th>Detail</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="chaos-list-table">
-                    </tbody>
-                </table>
+            <div class="modal-body" id="metrics-body">
+                <p class="cb-muted">Loading…</p>
             </div>
         </div>
     </div>

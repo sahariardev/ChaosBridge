@@ -4,6 +4,8 @@ import com.github.sahariardev.chaos.Chaos;
 import com.github.sahariardev.chaos.ChaosFactory;
 import com.github.sahariardev.common.Constant;
 import com.github.sahariardev.common.Store;
+import com.github.sahariardev.metrics.MetricsRegistry;
+import com.github.sahariardev.metrics.ProxyMetrics;
 import com.github.sahariardev.pipeline.Pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,21 +75,23 @@ public class Server {
     public void handleClient(Socket clientSocket, String serverHost, int serverPort) {
         Socket targetSocket = null;
         ExecutorService copyExecutor = Executors.newVirtualThreadPerTaskExecutor();
+        ProxyMetrics metrics = MetricsRegistry.INSTANCE.register(key);
+        metrics.connectionOpened();
 
         try {
             targetSocket = new Socket(serverHost, serverPort);
 
             InputStream clientInputStream = clientSocket.getInputStream();
-            OutputStream clientOutputStream = clientSocket.getOutputStream();
+            OutputStream clientOutputStream = metrics.countDownstream(clientSocket.getOutputStream());
             InputStream targetInputStream = targetSocket.getInputStream();
-            OutputStream targetOutputStream = targetSocket.getOutputStream();
+            OutputStream targetOutputStream = metrics.countUpstream(targetSocket.getOutputStream());
 
             Pipeline upStreamPipeLine = new Pipeline.Builder().name("upstream").build();
             Pipeline downStreamPipeLine = new Pipeline.Builder().name("downstream").build();
 
             List<Map<String, Object>> chaosConfig = Store.INSTANCE.get(key);
             for (Map<String, Object> chaosConfigNode : chaosConfig) {
-                Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode);
+                Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode, metrics);
                 if (chaosConfigNode.get(Constant.LINE).equals(Constant.DOWNSTREAM)) {
                     downStreamPipeLine.addChaos(chaos);
                 } else if (chaosConfigNode.get(Constant.LINE).equals(Constant.UPSTREAM)) {
@@ -116,7 +120,9 @@ public class Server {
 
         } catch (Exception e) {
             logger.warn("Exception in handleClient", e);
+            metrics.connectionFailed();
         } finally {
+            metrics.connectionClosed();
             copyExecutor.shutdownNow();
             try {
                 if (targetSocket != null && !targetSocket.isClosed()) targetSocket.close();

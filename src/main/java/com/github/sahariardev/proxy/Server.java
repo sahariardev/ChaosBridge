@@ -1,12 +1,9 @@
 package com.github.sahariardev.proxy;
 
-import com.github.sahariardev.chaos.Chaos;
-import com.github.sahariardev.chaos.ChaosFactory;
 import com.github.sahariardev.common.Constant;
-import com.github.sahariardev.common.Store;
 import com.github.sahariardev.metrics.MetricsRegistry;
 import com.github.sahariardev.metrics.ProxyMetrics;
-import com.github.sahariardev.pipeline.Pipeline;
+import com.github.sahariardev.pipeline.ChaosEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,8 +13,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
 public class Server {
@@ -86,21 +81,13 @@ public class Server {
             InputStream targetInputStream = targetSocket.getInputStream();
             OutputStream targetOutputStream = metrics.countUpstream(targetSocket.getOutputStream());
 
-            Pipeline upStreamPipeLine = new Pipeline.Builder().name("upstream").build();
-            Pipeline downStreamPipeLine = new Pipeline.Builder().name("downstream").build();
+            // Chaos is evaluated per chunk, so profiles added or removed while this connection is open
+            // take effect on the very next chunk (see ChaosEngine).
+            ChaosEngine upStreamEngine = new ChaosEngine(key, Constant.UPSTREAM, metrics);
+            ChaosEngine downStreamEngine = new ChaosEngine(key, Constant.DOWNSTREAM, metrics);
 
-            List<Map<String, Object>> chaosConfig = Store.INSTANCE.get(key);
-            for (Map<String, Object> chaosConfigNode : chaosConfig) {
-                Chaos chaos = ChaosFactory.buildChaos(chaosConfigNode, metrics);
-                if (chaosConfigNode.get(Constant.LINE).equals(Constant.DOWNSTREAM)) {
-                    downStreamPipeLine.addChaos(chaos);
-                } else if (chaosConfigNode.get(Constant.LINE).equals(Constant.UPSTREAM)) {
-                    upStreamPipeLine.addChaos(chaos);
-                }
-            }
-
-            Future<?> upStreamFuture = copyExecutor.submit(() -> copyStream(clientInputStream, targetOutputStream, upStreamPipeLine));
-            Future<?> downStreamFuture = copyExecutor.submit(() -> copyStream(targetInputStream, clientOutputStream, downStreamPipeLine));
+            Future<?> upStreamFuture = copyExecutor.submit(() -> upStreamEngine.transfer(clientInputStream, targetOutputStream));
+            Future<?> downStreamFuture = copyExecutor.submit(() -> downStreamEngine.transfer(targetInputStream, clientOutputStream));
 
             // Wait for one direction to complete, then cancel the other
             while (true) {
@@ -153,14 +140,6 @@ public class Server {
             } catch (InterruptedException e) {
                 executorService.shutdownNow();
             }
-        }
-    }
-
-    private void copyStream(InputStream inputStream, OutputStream outputStream, Pipeline pipeline) {
-        try {
-            pipeline.copy(inputStream, outputStream);
-        } catch (IOException e) {
-            logger.debug("Failed to copy stream", e);
         }
     }
 }

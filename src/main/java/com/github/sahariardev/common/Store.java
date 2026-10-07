@@ -14,11 +14,19 @@ public class Store {
     private Store() {
     }
 
+    /**
+     * Returns an immutable point-in-time snapshot of the chaos profiles for a key. A snapshot (rather
+     * than a live view) lets the proxy read the active profiles on every chunk without risking a
+     * {@link ConcurrentModificationException} when chaos is added or removed mid-transfer.
+     */
     public List<Map<String, Object>> get(String key) {
-        if (!chaosMap.containsKey(key)) {
+        List<Map<String, Object>> list = chaosMap.get(key);
+        if (list == null) {
             return Collections.emptyList();
         }
-        return Collections.unmodifiableList(chaosMap.get(key));
+        synchronized (list) {
+            return List.copyOf(list);
+        }
     }
 
     public List<String> keys() {
@@ -30,22 +38,26 @@ public class Store {
         serverMap.put(key, server);
     }
 
-    public synchronized void put(String key, Map<String, Object> value) {
-        UUID uuid = UUID.randomUUID();
-        value.put("id", uuid.toString());
-        List<Map<String, Object>> chaosList = chaosMap.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
-        chaosList.add(value);
+    public void put(String key, Map<String, Object> value) {
+        value.put("id", UUID.randomUUID().toString());
+        List<Map<String, Object>> chaosList = chaosMap.computeIfAbsent(key, k -> new ArrayList<>());
+        synchronized (chaosList) {
+            chaosList.add(value);
+        }
     }
 
-    public synchronized void remove(String key, String chaosId) {
+    public void remove(String key, String chaosId) {
         List<Map<String, Object>> chaosList = chaosMap.get(key);
-        if (chaosList != null && chaosId != null) {
+        if (chaosList == null || chaosId == null) {
+            return;
+        }
+        synchronized (chaosList) {
             chaosList.removeIf(chaos -> chaosId.equals(chaos.get("id")));
         }
     }
 
     public List<Map<String, Object>> getChaosList(String key) {
-        return chaosMap.getOrDefault(key, Collections.emptyList());
+        return get(key);
     }
 
     public Server getServer(String key) {

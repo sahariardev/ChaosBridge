@@ -5,6 +5,12 @@
     const REFRESH_MS = 3000;
     const state = { chaosConfig: null, loading: false };
 
+    const FIELD_HINTS = {
+        latency: 'Delay per chunk, in seconds (e.g. 2 = two seconds)',
+        bytePerSecond: 'Maximum bytes forwarded per second (e.g. 1024)',
+        packetLossRate: 'Drop probability from 0.0 (none) to 1.0 (drop everything)'
+    };
+
     /* ------------------------------------------------------------------ */
     /* Helpers                                                             */
     /* ------------------------------------------------------------------ */
@@ -251,10 +257,12 @@
                 const selectedConfig = config.find(function (c) { return c.type === selected; });
                 const $container = $form.find('.field-container').empty();
                 (selectedConfig ? selectedConfig.fields : []).forEach(function (field) {
+                    const hint = FIELD_HINTS[field] || '';
                     $container.append(
                         `<div class="cb-field">
                             <label class="cb-label">${escapeHtml(field)}</label>
-                            <input type="text" class="cb-input" name="${escapeHtml(field)}" placeholder="${escapeHtml(field)}">
+                            <input type="text" class="cb-input" name="${escapeHtml(field)}" placeholder="${escapeHtml(hint || field)}">
+                            ${hint ? `<small class="cb-hint">${escapeHtml(hint)}</small>` : ''}
                         </div>`
                     );
                 });

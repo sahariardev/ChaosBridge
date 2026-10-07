@@ -218,6 +218,10 @@ Invalid input is rejected with `400 Bad Request`; chaos attached to an unknown p
 
 `line` selects the affected direction: `upstream` (client → server) or `downstream` (server → client).
 
+Profiles take effect immediately, including on connections that are already open, so keep-alive and
+pooled clients are affected on their next request. Latency is measured in **seconds**, bandwidth in
+**bytes per second**, and packet loss as a probability from **0.0 to 1.0**.
+
 ## Metrics & dashboard
 
 The web console at `http://localhost:9091/` is a live dashboard showing active proxies, running

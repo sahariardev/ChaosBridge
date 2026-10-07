@@ -496,6 +496,14 @@ code, pre {
     padding-right: 34px;
 }
 
+.cb-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--cb-faint);
+    font-family: var(--cb-mono);
+    font-size: 0.74rem;
+}
+
 .cb-form-error {
     margin-top: 4px;
     padding: 10px 12px;

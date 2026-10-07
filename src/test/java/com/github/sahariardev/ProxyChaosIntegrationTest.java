@@ -85,6 +85,55 @@ class ProxyChaosIntegrationTest {
     }
 
     @Test
+    void chaosAppliesToAnAlreadyOpenConnection() throws Exception {
+        int proxyPort = createProxy();
+        String key = keyFor(proxyPort);
+
+        try (Socket socket = new Socket("127.0.0.1", proxyPort)) {
+            socket.setSoTimeout(8000);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            out.println("one");
+            assertEquals("one", in.readLine());
+
+            // Add chaos after the connection is already established: it must still take effect.
+            applyChaos(key, Map.of("chaosType", "LATENCY", "line", "downstream", "latency", "1"));
+
+            long start = System.nanoTime();
+            out.println("two");
+            assertEquals("two", in.readLine());
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+
+            assertTrue(elapsedMs >= 900,
+                    "an already-open connection should pick up newly added chaos, but took " + elapsedMs + "ms");
+        }
+    }
+
+    @Test
+    void removingChaosAppliesToAnAlreadyOpenConnection() throws Exception {
+        int proxyPort = createProxy();
+        String key = keyFor(proxyPort);
+        applyChaos(key, Map.of("chaosType", "PACKET_LOSS", "line", "downstream", "packetLossRate", "1.0"));
+
+        try (Socket socket = new Socket("127.0.0.1", proxyPort)) {
+            socket.setSoTimeout(3000);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            out.println("one");
+            assertThrows(SocketTimeoutException.class, in::readLine);
+
+            String chaosId = firstChaosId(key);
+            client.toBlocking().exchange(HttpRequest.DELETE("/removeChaos/" + key + "/" + chaosId), Map.class);
+
+            socket.setSoTimeout(5000);
+            out.println("two");
+            assertEquals("two", in.readLine());
+        }
+    }
+
+    @Test
     void bandwidthChaosStillDeliversTraffic() throws Exception {
         int proxyPort = createProxy();
         String key = keyFor(proxyPort);
